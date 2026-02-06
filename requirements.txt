@@ -1,0 +1,11 @@
+python-dotenv
+sentence-transformers
+scipy
+scikit-learn
+rank-bm25
+numpy
+litellm
+pydantic
+semhash
+inflect
+nltk

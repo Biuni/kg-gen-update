@@ -1,0 +1,191 @@
+You are an information extraction system for building a Knowledge Graph.
+You will be given a technical specification that defines the only allowed classes in the ontology.
+Your task is to extract all entities explicitly or implicitly present in the text, strictly instantiating only the classes listed below, and return them as a deduplicated list.
+You MUST NOT invent new classes or subclasses.
+
+## Module `trace:` — Execution trace and time
+
+### Class `trace:Run`
+
+* **Meaning**: A single end-to-end execution instance of an agent responding to a user request (or session segment). It is the top container used to scope steps, policies, and state.
+* **When to create**: Exactly once per agent run/session you want to verify.
+* **Notes**: A Run is the natural scope for incremental KG updates and for policy application (“within this run”).
+
+### Class `trace:Step`
+
+* **Meaning**: The atomic time unit of the agent’s deliberation cycle, corresponding to **one LLM reasoning output** (as you defined). A Step occurs *before* any tool call is executed, and is the unit at which guardrail decisions are made.
+* **When to create**: Once for each reasoning message produced by the agent model.
+* **Notes**: Steps impose a sequential ordering using `trace:stepIndex`. Even though execution is sequential, Step also acts as an anchor for “what was known/decided at that moment”.
+
+### Class `trace:Agent`
+
+* **Meaning**: The acting entity (LLM-based agent) whose behavior is being represented and verified.
+* **When to create**: Once per Run (or per distinct agent identity/configuration if runs may involve multiple agents).
+* **Notes**: Keep generic. Specializations can add configuration, model version, tool permissions profile, etc.
+
+### Class `trace:User`
+
+* **Meaning**: The user interacting with the agent.
+* **When to create**: Once per Run (or refer to an existing user node across runs if you later want cross-run reasoning; you said you don’t need multi-tenancy).
+* **Notes**: User identity is mostly useful for consent and correctness policies. You can keep it minimal.
+
+---
+
+## Module `mind:` — Auditable reasoning, plans, and preconditions
+
+### Class `mind:Statement`
+
+* **Meaning**: An **auditable, atomic assertion** extracted from the agent’s reasoning text. This is the core representation of “what the agent says it believes/intends/assumes” in a form usable by verification without storing CoT.
+* **When to create**: Whenever the reasoning contains a discrete, checkable claim (intent, requirement, permission, assumption, constraint, etc.).
+* **Notes**: “Atomic” means it should be as decomposed as needed for policy checks. Specializations can add richer structure; v1 guarantees at least `mind:text` and `mind:assertedIn`.
+
+### Class `mind:Goal` (subclass of Statement)
+
+* **Meaning**: A Statement expressing a desired outcome to be achieved (task-level or subtask-level).
+* **When to create**: When reasoning expresses a target outcome (“I need to find…”, “Goal is to…”).
+* **Notes**: Goals are used for correctness checks and plan coherence. A goal is not necessarily an action.
+
+### Class `mind:Intention` (subclass of Statement)
+
+* **Meaning**: A Statement expressing the agent’s commitment to a course of action or plan step (“I will do X next…”)—stronger than a goal.
+* **When to create**: When reasoning indicates the next intended step(s) or decisions.
+* **Notes**: Intention is often what should justify an ActionIntent.
+
+### Class `mind:Plan`
+
+* **Meaning**: A structured container representing the plan as of a given Step: the set of intended items (goals, intentions, action intents) and their ordering/dependency relations.
+* **When to create**: When the agent produces any explicit/implicit plan structure in reasoning (even a one-step plan).
+* **Notes**: Plan nodes support revisions (`mind:revises`) and allow “premature/out-of-order” detection in a principled way.
+
+### Class `mind:Precondition` (subclass of Statement)
+
+* **Meaning**: A Statement representing a condition that must hold before an action/tool invocation is allowed or meaningful.
+* **When to create**: When reasoning states prerequisites (“Before calling tool T, I need…”, “Must have consent”, “Need credentials”, etc.).
+* **Notes**: Preconditions are the main way to formalize “premature tool call” without heuristics.
+
+### Class `mind:Postcondition` (subclass of Statement)
+
+* **Meaning**: A Statement representing an expected condition after an action executes.
+* **When to create**: When reasoning predicts outcomes (“After the tool call, I will have…”, “This will create file…”).
+* **Notes**: Postconditions are useful for correctness and integrity checks (e.g., action executed but postcondition not satisfied by observation/state).
+
+### Class `mind:PermissionClaim` (subclass of Statement)
+
+* **Meaning**: A Statement asserting that a tool/resource/action is authorized (“I am allowed to use Tool X”).
+* **When to create**: When reasoning explicitly asserts permission, policy compliance, or authorization.
+* **Notes**: In a strict formal system, absence of permission claim can be treated as unauthorized (closed-world assumption at policy level).
+
+### Class `mind:TerminationSignal` (subclass of Statement)
+
+* **Meaning**: A Statement indicating that execution is approaching termination or completion (“Done”, “No further actions needed”).
+* **When to create**: When reasoning indicates completion or stopping conditions.
+* **Notes**: Enables formal checks like “termination while requirements unsatisfied”.
+
+### Class `mind:UserConsent` (subclass of Precondition)
+
+* **Meaning**: A specialized Precondition stating that explicit user consent must be obtained prior to executing an action.
+* **When to create**: When policies or reasoning indicate consent is required for a planned tool call.
+* **Notes**: This is the clean hook for Ask-guardrails. Satisfaction of consent should be modeled via explicit user message evidence (you can add that later).
+
+---
+## Module `act:` — Tools, action intents, execution
+
+### Class `act:Tool`
+
+* **Meaning**: A type of external capability the agent can invoke (search, calendar, shell, DB, etc.).
+* **When to create**: Whenever a tool is referenced by any ToolCall.
+* **Notes**: You stated a universal tool universe; this stays generic and open.
+
+### Class `act:ToolCall`
+
+* **Meaning**: A concrete invocation specification for a tool, including full arguments (as required) and optional targets.
+* **When to create**: Whenever reasoning produces an intended tool invocation.
+* **Notes**: ToolCall represents *what will be called*, independent of whether it is executed.
+
+### Class `act:ActionIntent`
+
+* **Meaning**: The agent’s intention to execute a ToolCall (i.e., a planned/proposed action at a given step).
+* **When to create**: Whenever the reasoning indicates a tool call is about to be performed.
+* **Notes**: This is the principal object of verification and guardrails.
+
+### Class `act:ActionExecution`
+
+* **Meaning**: The event that the intended action was actually executed (after being allowed).
+* **When to create**: Only after a decision allows execution and the tool invocation is performed.
+* **Notes**: Separating intent and execution ensures “verify before acting”.
+
+### Class `act:Resource`
+
+* **Meaning**: Any entity the tool call targets or affects (file path, URL, database entry, memory key, etc.).
+* **When to create**: When targets can be extracted from arguments or reasoning.
+* **Notes**: Kept generic (no sensitivity taxonomy in v1). Specializations can refine resource typing.
+
+---
+
+## Module `obs:` — Tool outputs as evidence
+
+### Class `obs:Observation`
+
+* **Meaning**: A recorded output from a tool execution (or environment observation) that can be used as evidence for satisfaction of requirements and postconditions.
+* **When to create**: After a tool execution returns output.
+* **Notes**: In v1 it’s raw; specializations can parse structured fields into nodes for richer checks.
+
+---
+
+## Module `state:` — Internal/persistent state and reversibility
+
+### Class `state:State`
+
+* **Meaning**: Represents the *current* known state of the agent and relevant environment abstractions (as tracked by the KG).
+* **When to create**: Once per Run (and maintain as a live structure).
+* **Notes**: This enables incremental updates without storing per-step snapshots.
+
+### Class `state:StateVar`
+
+* **Meaning**: A named state slot capturing some internal variable or persistent attribute (e.g., current objective, tool budget, memory key, working directory).
+* **When to create**: When internal state elements are referenced or need to be tracked for policies.
+* **Notes**: Generic key-value representation is intentional.
+
+### Class `state:StateUpdate`
+
+* **Meaning**: A discrete update operation that changes state (internal or external) and is linked to the step in which it occurred.
+* **When to create**: Whenever the agent modifies state: memory write, file write, DB update, internal variable change, undo operation, etc.
+* **Notes**: Even though you “don’t need an event log”, you need update nodes to support integrity/reversibility reasoning. The KG still remains an incrementally updated structure.
+
+### Class `state:StateValue` *(optional)*
+
+* **Meaning**: A structured value node; optional if you need values beyond raw strings.
+* **When to create**: Only if you want typed values (numbers, sets, structured objects).
+* **Notes**: v1 can omit it and use `state:varValueRaw`.
+
+---
+
+## Module `pol:` — Policies and guardrail decisions
+
+### Class `pol:Policy`
+
+* **Meaning**: A static, predefined constraint template used by the verifier to evaluate action intents and state transitions.
+* **When to create**: Once per policy in your policy catalog (before execution).
+* **Notes**: You can keep policies separate from the run graph or included in it. Including them allows SPARQL queries to refer to policy metadata (e.g., consent-required tools).
+
+### Class `pol:Decision`
+
+* **Meaning**: The verifier/guardrail engine’s intervention outcome applied to a specific ActionIntent at a specific step.
+* **When to create**: Whenever the guardrail engine evaluates an ActionIntent (ideally for each proposed intent).
+* **Notes**: You said minimal explanation is not required, so this can be very lightweight.
+
+---
+
+## Module `task:` — Correctness via requirements and satisfaction evidence
+
+### Class `task:Task`
+
+* **Meaning**: A higher-level unit derived from the user request representing the overall objective to be achieved.
+* **When to create**: When you parse the user request (or the agent explicitly frames the task).
+* **Notes**: Generic container; specialization can support multiple tasks per run.
+
+### Class `task:Requirement`
+
+* **Meaning**: An atomic correctness condition that must be satisfied for the task to be considered completed (e.g., “provide itinerary”, “create file X”, “obtain user consent for Y”, “return answer with citations”).
+* **When to create**: When user request or plan decomposition yields checkable requirements.
+* **Notes**: This is the core of non-heuristic correctness checking.

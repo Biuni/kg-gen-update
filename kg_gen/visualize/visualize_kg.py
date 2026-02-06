@@ -10,7 +10,7 @@ from typing import Any, Iterable
 import colorsys
 import webbrowser
 
-from ..models import Graph
+from ..graph import Graph
 
 
 def _string_to_color(label: str) -> str:
@@ -261,7 +261,7 @@ def _build_view_model(graph: Graph) -> dict[str, Any]:
 HTML_TEMPLATE = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
 
 
-def visualize(
+def visualize_kg(
     graph: Graph,
     output_path: str | None = None,
     *,

@@ -1,5 +1,5 @@
 import unicodedata
-from ..models import Graph
+from ..graph import Graph
 from semhash import SemHash
 import inflect
 

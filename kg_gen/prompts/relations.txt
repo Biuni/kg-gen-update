@@ -1,0 +1,367 @@
+You are an expert system for extracting **RELATIONSHIPS** from AI Agent Execution Traces in order to build an auditable Knowledge Graph.
+A list of entities has already been extracted from the text and is provided to you as ground truth. Your task is to identify and extract **ONLY the relationships between these existing entities**.
+
+**Hard constraints (must follow):**
+1. **Closed-world assumption (strict)**
+* You MUST NOT invent new entities.
+* You MUST NOT invent new relationship types, properties, predicates, or modules.
+* You MUST use **only** the relationship properties explicitly defined below.
+
+2. **Entity restriction**
+* Every relationship MUST connect two entities that already exist in the extracted entity list.
+* If one endpoint of a relationship is missing, DO NOT create the relationship.
+
+3. **Property restriction**
+* Each relationship MUST use an **exact property name** as defined in the ontology (including namespace prefixes).
+* Do NOT approximate, generalize, or semantically “map” relations to similar ones.
+
+4. **Faithful and textual grounding**
+* Extract a relationship ONLY if it is clearly supported by the text or by the structural semantics of the trace (e.g., step membership, execution order, causality explicitly described).
+* Do NOT infer implicit causal or logical relations beyond what is stated or structurally mandated by the model (e.g., do not invent justifications or satisfaction links).
+
+5. **Temporal and structural correctness**
+* Respect directionality and domain/range exactly as defined (e.g., `Run → Step`, `Statement → Step`).
+* Do NOT assert relationships that would violate ordering constraints (e.g., execution before proposal).
+
+6. **Minimality**
+* Extract all required and justified relationships, but no redundant or speculative ones.
+* Optional properties (`optional` in the specification) MUST be omitted unless clearly supported by the text.
+
+7. **No interpretation or explanation**
+* Do NOT explain, summarize, or justify your choices. * Perform relationship extraction only.
+
+**Output requirements:**
+– Output only relationships.
+– Each relationship MUST be represented as:
+* subject entity identifier
+* property name (exact ontology property)
+* object entity identifier
+– Do NOT include entity definitions, class assignments, or free text.
+
+The allowed relationship properties you may use are listed below. Use them **exclusively**.
+
+## Module `trace:` — Execution trace and time
+
+### Property `trace:hasStep (Run → Step)`
+
+* **Meaning**: Membership relation: the Run contains the Step.
+* **When to create**: For each Step created, assert it is a step of the current Run.
+* **Notes**: Enables scoping queries to a run. Cardinality is 1..* on Run side.
+
+### Property `trace:stepIndex (Step → xsd:integer)`
+
+* **Meaning**: Total order index of steps within a Run (monotonic increasing, sequential).
+* **When to create**: Always for every Step.
+* **Notes**: This is the main temporal primitive. Policies often use numeric comparisons.
+
+### Property `trace:inRun (Step → Run)`
+
+* **Meaning**: Inverse membership: identifies which Run a Step belongs to.
+* **When to create**: Always for every Step.
+* **Notes**: Useful for SHACL validation and scoping.
+
+### Property `trace:generatedAt (Step → xsd:dateTime)` *(optional)*
+
+* **Meaning**: Wall-clock time at which the Step reasoning output was produced.
+* **When to create**: If runtime provides timestamps.
+* **Notes**: Not required for formal correctness/safety, but useful for auditing and latency analysis.
+
+### Property `trace:currentState (Run → state:State)`
+
+* **Meaning**: Pointer to the *current* state object representing the latest known internal/external state as maintained by the KG (not necessarily the true environment state).
+* **When to create**: Once per Run; updated/rewired as state evolves.
+* **Notes**: This enables “incremental update” semantics: you keep a live view plus historical updates.
+
+---
+
+## Module `mind:` — Auditable reasoning, plans, and preconditions
+
+### Property `mind:assertedIn (Statement → Step)`
+
+* **Meaning**: The Step in which the Statement was produced/extracted.
+* **When to create**: Always for every Statement.
+* **Notes**: Critical for temporal scoping (“what was known at step t”).
+
+### Property `mind:text (Statement → xsd:string)`
+
+* **Meaning**: Human-readable content of the auditable statement, extracted from the reasoning.
+* **When to create**: Always for every Statement.
+* **Notes**: This is not CoT storage; it’s the minimal audit text associated to the extracted fact.
+
+### Property `mind:polarity (Statement → xsd:boolean)` *(optional)*
+
+* **Meaning**: Whether the statement asserts (true) or denies (false) something (“I have permission” vs “I do not have permission”).
+* **When to create**: When negation is present or relevant.
+* **Notes**: Enables contradiction detection formally without confidence scores.
+
+### Property `mind:about (Statement → rdf:Resource)` *(optional)*
+
+* **Meaning**: Anchor linking a statement to the entity it refers to (tool, resource, requirement, etc.).
+* **When to create**: When the statement clearly refers to a specific object.
+* **Notes**: Greatly improves formal queryability. Specializations can tighten range (Tool/Resource/etc.).
+
+### Property `mind:hasPlan (Step → Plan)`
+
+* **Meaning**: The plan that is current/produced at this step.
+* **When to create**: If a plan is extracted at the step.
+* **Notes**: 0..1 in v1, but you can allow multiple plans later.
+
+### Property `mind:revises (Plan → Plan)`
+
+* **Meaning**: Plan versioning relation; indicates the new plan is a revision of the prior plan.
+* **When to create**: When the agent updates or changes its plan.
+* **Notes**: Supports tracing abandoned plans and plan evolution.
+
+### Property `mind:hasIntention (Plan → Intention)`
+
+* **Meaning**: The plan includes the given intention as a plan item.
+* **When to create**: When an intention is part of the plan structure.
+* **Notes**: You can similarly link goals via `mind:hasGoal`.
+
+### Property `mind:hasGoal (Plan → Goal)`
+
+* **Meaning**: The plan includes the given goal(s).
+* **When to create**: When goals are extracted and belong to the plan.
+* **Notes**: Important for correctness.
+
+### Property `mind:subGoalOf (Goal → Goal)`
+
+* **Meaning**: Decompositional structure between goals (hierarchy).
+* **When to create**: When reasoning decomposes a task into subgoals.
+* **Notes**: Enables checking whether subgoals were achieved before claiming the parent goal is achieved.
+
+### Property `mind:planItem (Plan → rdf:Resource)`
+
+* **Meaning**: Generic membership of any plan item (goals, intentions, action intents, constraints).
+* **When to create**: Whenever you want a plan to explicitly list its constituents.
+* **Notes**: Keeping range generic is intentional for extensibility.
+
+---
+
+## Module `act:` — Tools, action intents, execution
+
+### Property `act:proposedIn (ActionIntent → Step)`
+
+* **Meaning**: The step in which the action was proposed/planned.
+* **When to create**: Always for each ActionIntent.
+* **Notes**: Enables checks like “no execution before proposal”.
+
+### Property `act:justifiedBy (ActionIntent → mind:Statement)`
+
+* **Meaning**: Links an action intent to the auditable reasoning statement(s) that justify it (goal/intention/constraint).
+* **When to create**: When extraction can link the action to a motivating statement.
+* **Notes**: If you allow it to be absent, you can detect incoherence formally; if you require it, you prevent incoherent plans from being schema-valid. I recommend **allow 0..*** and enforce via policy.
+
+### Property `act:intends (ActionIntent → ToolCall)`
+
+* **Meaning**: The ToolCall that this action intends to execute.
+* **When to create**: Always for each ActionIntent.
+* **Notes**: Exactly 1 makes runtime enforcement clean.
+
+### Property `act:usesTool (ToolCall → Tool)`
+
+* **Meaning**: Tool type used by the ToolCall.
+* **When to create**: Always.
+* **Notes**: A foundational link for access-control policies.
+
+### Property `act:argumentsRaw (ToolCall → xsd:string)`
+
+* **Meaning**: Full arguments passed to the tool call, serialized as a string (JSON recommended).
+* **When to create**: Always for each ToolCall.
+* **Notes**: You required full arguments. Keeping as raw string avoids premature schema commitments; later you can add structured arg nodes.
+
+### Property `act:targets (ToolCall → Resource)` *(optional)*
+
+* **Meaning**: Explicit targets extracted from arguments (files, URLs, IDs).
+* **When to create**: When target entities can be parsed reliably.
+* **Notes**: Strongly recommended to support integrity and authorization checks, even without sensitivity taxonomy.
+
+### Property `act:requires (ActionIntent → mind:Precondition)` *(optional)*
+
+* **Meaning**: Preconditions that must be satisfied prior to executing the action intent.
+* **When to create**: When reasoning declares prerequisites.
+* **Notes**: Core for “premature tool call” checks.
+
+### Property `act:status (ActionIntent → xsd:string)`
+
+* **Meaning**: Lifecycle status of the action intent in the guardrail pipeline.
+* **When to create**: Always. Start as `"proposed"`, then updated to `"blocked"`, `"allowed"`, `"executed"`, `"skipped"`.
+* **Notes**: Status is a simple state machine enabling deterministic control flow.
+
+### Property `act:executedAs (ActionIntent → ActionExecution)`
+
+* **Meaning**: Connects intent to the execution event if executed.
+* **When to create**: After execution occurs.
+* **Notes**: SHACL should enforce that status `"executed"` implies this link exists.
+
+### Property `act:executionIn (ActionExecution → Step)`
+
+* **Meaning**: The step during which the execution occurred (often the same step as proposal in synchronous agents, but can be later).
+* **When to create**: For each execution event.
+* **Notes**: Enables temporal checks: execution step index must be ≥ proposal step index.
+
+### Property `act:hasObservation (ActionExecution → obs:Observation)`
+
+* **Meaning**: Observations returned by the tool execution.
+* **When to create**: When tool output is obtained.
+* **Notes**: Tool output is key evidence for correctness/integrity.
+
+### Property `act:causesUpdate (ActionExecution → state:StateUpdate)`
+
+* **Meaning**: State changes caused by executing the action.
+* **When to create**: When execution causes persistent or internal state modifications.
+* **Notes**: Enables integrity policies (e.g., no delete without reversibility).
+
+---
+
+## Module `obs:` — Tool outputs as evidence
+
+### Property `obs:observedIn (Observation → Step)`
+
+* **Meaning**: Step at which the observation became available to the agent.
+* **When to create**: Always.
+* **Notes**: Supports “information availability” checks (you can’t use an observation before it exists).
+
+### Property `obs:raw (Observation → xsd:string)`
+
+* **Meaning**: Raw tool output, serialized (often JSON/text).
+* **When to create**: Always.
+* **Notes**: You opted out of redaction rules in v1.
+
+### Property `obs:fromExecution (Observation → act:ActionExecution)`
+
+* **Meaning**: Execution event that produced this observation.
+* **When to create**: Always.
+* **Notes**: Crucial causal link from action to evidence.
+
+---
+
+## Module `state:` — Internal/persistent state and reversibility
+
+### Property `state:hasVar (State → StateVar)`
+
+* **Meaning**: The state contains this variable.
+* **When to create**: When creating/attaching variables to state.
+* **Notes**: Variables may persist across steps; you update their values over time.
+
+### Property `state:varName (StateVar → xsd:string)`
+
+* **Meaning**: Identifier/name of the state variable.
+* **When to create**: Always for StateVar.
+* **Notes**: Should be stable across updates (same varName = same conceptual variable).
+
+### Property `state:varValueRaw (StateVar → xsd:string)`
+
+* **Meaning**: Current value of the variable in a raw serialized form.
+* **When to create**: Always; update when state changes.
+* **Notes**: Generic representation supports broad domains.
+
+### Property `state:updatedBy (StateVar → StateUpdate)` *(optional pointer)*
+
+* **Meaning**: The update that most recently set/modified this variable.
+* **When to create**: When applying updates to a variable.
+* **Notes**: Helpful for tracing state causality without full provenance.
+
+### Property `state:updateIn (StateUpdate → Step)`
+
+* **Meaning**: Step at which the update occurred.
+* **When to create**: Always.
+* **Notes**: Enables ordering checks and audit.
+
+### Property `state:updateType (StateUpdate → xsd:string)`
+
+* **Meaning**: Operation kind: `"write"`, `"modify"`, `"delete"`, `"append"`, `"undo"`.
+* **When to create**: Always.
+* **Notes**: Central for integrity policies.
+
+### Property `state:reversible (StateUpdate → xsd:boolean)`
+
+* **Meaning**: Whether the update is reversible (or has a defined undo).
+* **When to create**: Always.
+* **Notes**: Supports your requirement to account for reversible state.
+
+### Property `state:inverseOf (StateUpdate → StateUpdate)` *(optional)*
+
+* **Meaning**: Links an update to its inverse/undo update.
+* **When to create**: When reversals are known/represented.
+* **Notes**: Useful for formal “undo exists” checks.
+
+### Property `state:affectsResource (StateUpdate → act:Resource)` *(optional)*
+
+* **Meaning**: Resource affected by the update (e.g., file being written/deleted).
+* **When to create**: When the resource is identifiable.
+* **Notes**: Enables integrity policies about specific resources even without sensitivity taxonomy.
+
+---
+
+## Module `pol:` — Policies and guardrail decisions
+
+### Property `pol:appliesToTool (Policy → act:Tool)`
+
+* **Meaning**: Declares that the policy is relevant for a given tool.
+* **When to create**: For tool-scoped policies (e.g., consent required for Email tool).
+* **Notes**: Keeps “unnecessary tool invocation” formal by defining tool eligibility conditions as policies.
+
+### Property `pol:requiresConsent (Policy → xsd:boolean)`
+
+* **Meaning**: Indicates whether explicit user consent is required before tool invocations under this policy.
+* **When to create**: For policies encoding consent gates.
+* **Notes**: Works with `mind:UserConsent` and Ask decisions.
+
+### Property `pol:decisionFor (Decision → act:ActionIntent)`
+
+* **Meaning**: The action intent that this decision governs.
+* **When to create**: Always for each Decision.
+* **Notes**: Enables enforcement: an intent should not be executed unless it has an Allow decision.
+
+### Property `pol:decisionType (Decision → xsd:string)`
+
+* **Meaning**: Intervention strategy: `Block`, `Allow`, `Ask`, `Repair`, `Escalate`.
+* **When to create**: Always.
+* **Notes**: This is the formal output of verification.
+
+### Property `pol:decidedIn (Decision → trace:Step)`
+
+* **Meaning**: Step at which the decision is made (i.e., at the step when intent is evaluated).
+* **When to create**: Always.
+* **Notes**: Supports audit and prevents “post-hoc” decisions being mistaken for pre-execution enforcement.
+
+### Property `pol:note (Decision → xsd:string)` *(optional)*
+
+* **Meaning**: Optional human-readable note summarizing why the decision was taken.
+* **When to create**: If you want lightweight logging without full explanation subgraphs.
+* **Notes**: Not used for formal verification, just usability.
+
+---
+
+## Module `task:` — Correctness via requirements and satisfaction evidence
+
+### Property `task:hasRequirement (Task → Requirement)`
+
+* **Meaning**: The task consists of these requirements.
+* **When to create**: When requirements are extracted.
+* **Notes**: Enables termination correctness checks.
+
+### Property `task:requirementText (Requirement → xsd:string)`
+
+* **Meaning**: Human-readable description of the requirement.
+* **When to create**: Always.
+* **Notes**: Auditable and supports debugging without storing CoT.
+
+### Property `task:derivedFromStep (Task → trace:Step)` *(optional)*
+
+* **Meaning**: Step in which the task/requirements were derived or asserted.
+* **When to create**: If task extraction occurs at a specific step.
+* **Notes**: Helpful for evolving requirements, but optional in v1.
+
+### Property `task:satisfiedBy (Requirement → rdf:Resource)`
+
+* **Meaning**: Links a requirement to evidence nodes that satisfy it (e.g., an Observation, a StateUpdate, a final answer Statement, a user acceptance message).
+* **When to create**: When there is concrete evidence in the KG that fulfills the requirement.
+* **Notes**: This is the non-heuristic “proof of completion”.
+
+### Property `task:status (Requirement → xsd:string)` *(optional)*
+
+* **Meaning**: Optional explicit status label (`satisfied`, `unsatisfied`, `unknown`).
+* **When to create**: If you want to materialize status rather than compute via query.
+* **Notes**: Not required; can be inferred by SPARQL.

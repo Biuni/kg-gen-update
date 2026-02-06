@@ -1,14 +1,22 @@
-from typing import List
+from typing import List, Optional
 from scipy.spatial.distance import cdist
 from concurrent.futures import ThreadPoolExecutor
-import dspy
-from ..models import Graph
+from ..graph import Graph
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from sklearn.cluster import KMeans
+import litellm
+from pydantic import BaseModel
+
+
+class DeduplicateResponse(BaseModel):
+    """Structured response for LM-based deduplication."""
+
+    duplicates: List[str]
+    alias: str
 
 
 class LLMDeduplicate:
@@ -18,11 +26,26 @@ class LLMDeduplicate:
     node_clusters: list[list[str]]
     edge_clusters: list[list[str]]
     retrieval_model: SentenceTransformer
-    lm: dspy.LM
+    model: str
+    api_key: Optional[str]
+    api_base: Optional[str]
+    temperature: float
+    reasoning_effort: Optional[str]
 
     logger: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, retrieval_model: SentenceTransformer, lm: dspy.LM, graph: Graph):
+    def __init__(
+        self,
+        retrieval_model: SentenceTransformer,
+        graph: Graph,
+        model: Optional[str] = None,
+        api_key: Optional[str] = None,
+        api_base: Optional[str] = None,
+        temperature: Optional[float] = None,
+        reasoning_effort: Optional[str] = None,
+        context: Optional[str] = None,
+        usage_history: Optional[list[dict]] = None,
+    ):
         """
         Initialize KG-assisted RAG with cached embeddings, BM25 tokens, and text chunk store.
         """
@@ -32,11 +55,17 @@ class LLMDeduplicate:
         self.node_clusters = graph.entity_clusters or []
         self.edge_clusters = graph.edge_clusters or []
         self.retrieval_model = retrieval_model
-        self.lm = lm
+        self.model = model or "openai/gpt-4o"
+        self.api_key = api_key
+        self.api_base = api_base
+        self.temperature = 0.0 if temperature is None else temperature
+        self.reasoning_effort = reasoning_effort
+        self.context = context
+        self.usage_history = usage_history
 
         # Embeddings and BM25 tokens for nodes
         self.node_embeddings = retrieval_model.encode(
-            self.nodes, show_progress_bar=True
+            self.nodes, show_progress_bar=False
         )
         self.node_bm25_tokenized = [text.lower().split() for text in self.nodes]
 
@@ -45,14 +74,14 @@ class LLMDeduplicate:
 
         # Embeddings and BM25 tokens for edges
         self.edge_embeddings = retrieval_model.encode(
-            self.edges, show_progress_bar=True
+            self.edges, show_progress_bar=False
         )
         self.edge_bm25_tokenized = [text.lower().split() for text in self.edges]
 
         # Always rebuild BM25 from tokens
         self.edge_bm25 = BM25Okapi(self.edge_bm25_tokenized)
 
-        dspy.configure(lm=lm)
+        # LiteLLM does not require global configuration for model usage.
 
     def get_relevant_items(
         self, query: str, top_k: int = 50, type: str = "node"
@@ -99,7 +128,7 @@ class LLMDeduplicate:
                 max_iter=20,
                 tol=0.0,
                 algorithm="lloyd",
-                verbose=True,
+                verbose=False,
             )
             kmeans.fit(embeddings.astype(np.float32))
             centroids = kmeans.cluster_centers_
@@ -209,25 +238,62 @@ class LLMDeduplicate:
                     ("..." if len(relevant_items) > 3 else ""),
                 )
 
-            class Deduplicate(dspy.Signature):
-                __doc__ = f"""Find duplicate {plural_type} for the item and an alias that best represents the duplicates. Duplicates are those that are the same in meaning, such as with variation in tense, plural form, stem form, case, abbreviation, shorthand. Return an empty list if there are none. 
-                """
-                item: str = dspy.InputField()
-                set: list[str] = dspy.InputField()
-                duplicates: list[str] = dspy.OutputField(
-                    description="Exact matches to items in {plural_type} set"
-                )
-                alias: str = dspy.OutputField(
-                    description=f"Best {singular_type} name to represent the duplicates, ideally from the {plural_type} set"
-                )
+            # Build prompt for LM-based deduplication.
+            system_prompt = (
+                f"Find duplicate {plural_type} for the item and an alias that best "
+                f"represents the duplicates. Duplicates are those that are the same "
+                f"in meaning, such as with variation in tense, plural form, stem form, "
+                f"case, abbreviation, shorthand. Return an empty list if there are none."
+            )
+            if self.context:
+                system_prompt = f"{system_prompt}\n\nContext:\n{self.context}"
+            user_prompt = (
+                "Item:\n"
+                f"{item}\n\n"
+                f"{plural_type.capitalize()} set:\n"
+                + "\n".join(f"- {candidate}" for candidate in relevant_items)
+            )
 
-            # with dspy.context(lm=self.lm):
-            deduplicate = dspy.Predict(Deduplicate)
-            result = deduplicate(item=item, set=relevant_items)
-            items.add(result.alias)
+            # Build JSON schema for a strict response.
+            schema = DeduplicateResponse.model_json_schema()
+            schema["additionalProperties"] = False
+
+            kwargs = {
+                "model": self.model,
+                "input": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": self.temperature,
+                "text": {
+                    "format": {
+                        "type": "json_schema",
+                        "name": "deduplicate_response",
+                        "schema": schema,
+                        "strict": True,
+                    }
+                },
+            }
+            if self.reasoning_effort:
+                kwargs["reasoning"] = {"effort": self.reasoning_effort}
+            if self.api_key:
+                kwargs["api_key"] = self.api_key
+            if self.api_base:
+                kwargs["api_base"] = self.api_base
+
+            response = litellm.responses(**kwargs)
+            if self.usage_history is not None:
+                usage = getattr(response, "usage", None)
+                if usage is None and isinstance(response, dict):
+                    usage = response.get("usage")
+                if usage:
+                    self.usage_history.append(usage)
+            raw_json = response.output[-1].content[0].text
+            parsed = DeduplicateResponse.model_validate_json(raw_json)
+            items.add(parsed.alias)
 
             # Filter duplicates to only include those that exist in the cluster
-            duplicates = [dup for dup in result.duplicates if dup in cluster]
+            duplicates = [dup for dup in parsed.duplicates if dup in cluster]
 
             if len(duplicates) > 0:
                 self.logger.debug(
@@ -235,14 +301,14 @@ class LLMDeduplicate:
                 )
                 self.logger.info(
                     "  → Using alias '%s' to represent: '%s' and %s",
-                    result.alias,
+                    parsed.alias,
                     item,
                     duplicates,
                 )
-                item_clusters[result.alias] = {item}
+                item_clusters[parsed.alias] = {item}
                 for duplicate in duplicates:
                     cluster.remove(duplicate)
-                    item_clusters[result.alias].add(duplicate)
+                    item_clusters[parsed.alias].add(duplicate)
             else:
                 self.logger.debug(
                     "  ✗ No duplicates found for '%s', keeping as is", item
