@@ -1,36 +1,50 @@
 from typing import List, Optional
-from scipy.spatial.distance import cdist
 from concurrent.futures import ThreadPoolExecutor
-from ..graph import Graph
 import logging
-from sklearn.metrics.pairwise import cosine_similarity
-from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
-import numpy as np
-from sklearn.cluster import KMeans
-import litellm
-from pydantic import BaseModel
 
+import numpy as np
+from scipy.spatial.distance import cdist
+from sklearn.cluster import KMeans
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
+from rank_bm25 import BM25Okapi
+from pydantic import BaseModel
+import litellm
+
+from ..graph import Graph
+
+
+# =========================
+# LLM RESPONSE SCHEMA
+# =========================
 
 class DeduplicateResponse(BaseModel):
-    """Structured response for LM-based deduplication."""
+    """
+    Schema for the LLM response used during deduplication.
+
+    Attributes:
+        duplicates: List of items considered duplicates of the input item.
+        alias: Canonical representative name for the cluster.
+    """
 
     duplicates: List[str]
     alias: str
 
 
+# =========================
+# LLM-BASED DEDUPLICATOR
+# =========================
+
 class LLMDeduplicate:
-    graph: Graph
-    nodes: list[str]
-    edges: list[str]
-    node_clusters: list[list[str]]
-    edge_clusters: list[list[str]]
-    retrieval_model: SentenceTransformer
-    model: str
-    api_key: Optional[str]
-    api_base: Optional[str]
-    temperature: float
-    reasoning_effort: Optional[str]
+    """
+    Deduplicate graph entities and edges using a hybrid approach:
+    - Dense embeddings (SentenceTransformer)
+    - Sparse retrieval (BM25)
+    - KMeans clustering for scalability
+    - LLM-based semantic judgment for final deduplication
+
+    The result is a deduplicated graph with explicit cluster mappings.
+    """
 
     logger: logging.Logger = logging.getLogger(__name__)
 
@@ -47,13 +61,31 @@ class LLMDeduplicate:
         usage_history: Optional[list[dict]] = None,
     ):
         """
-        Initialize KG-assisted RAG with cached embeddings, BM25 tokens, and text chunk store.
+        Initialize the LLM deduplicator.
+
+        Args:
+            retrieval_model: SentenceTransformer used for embeddings.
+            graph: Input graph to deduplicate.
+            model: LLM identifier.
+            api_key: API key for the LLM provider.
+            api_base: Optional custom API base URL.
+            temperature: Sampling temperature for the LLM.
+            reasoning_effort: Optional reasoning configuration.
+            context: Optional system-level context.
+            usage_history: Optional usage tracking.
         """
         self.graph = graph
-        self.nodes = list(graph.entities)
+
+        # Graph primitives
+        self.nodes = list(graph.entities.keys())
         self.edges = list(graph.edges)
+        self.relations = set(tuple(r) for r in graph.relations)
+
+        # Optional pre-existing clusters
         self.node_clusters = graph.entity_clusters or []
         self.edge_clusters = graph.edge_clusters or []
+
+        # Models & configuration
         self.retrieval_model = retrieval_model
         self.model = model or "openai/gpt-4o"
         self.api_key = api_key
@@ -63,366 +95,276 @@ class LLMDeduplicate:
         self.context = context
         self.usage_history = usage_history
 
-        # Embeddings and BM25 tokens for nodes
+        # Pre-compute embeddings for nodes and edges
         self.node_embeddings = retrieval_model.encode(
             self.nodes, show_progress_bar=False
         )
-        self.node_bm25_tokenized = [text.lower().split() for text in self.nodes]
-
-        # Always rebuild BM25 from tokens (it's fast and simpler than serializing the object)
-        self.node_bm25 = BM25Okapi(self.node_bm25_tokenized)
-
-        # Embeddings and BM25 tokens for edges
         self.edge_embeddings = retrieval_model.encode(
             self.edges, show_progress_bar=False
         )
-        self.edge_bm25_tokenized = [text.lower().split() for text in self.edges]
 
-        # Always rebuild BM25 from tokens
-        self.edge_bm25 = BM25Okapi(self.edge_bm25_tokenized)
+        # BM25 indices for lexical retrieval
+        self.node_bm25 = BM25Okapi([n.lower().split() for n in self.nodes])
+        self.edge_bm25 = BM25Okapi([e.lower().split() for e in self.edges])
 
-        # LiteLLM does not require global configuration for model usage.
+    # =========================
+    # CLUSTERING (REQUIRED)
+    # =========================
 
-    def get_relevant_items(
-        self, query: str, top_k: int = 50, type: str = "node"
-    ) -> list[str]:
+    def cluster(self, cluster_size: int = 128):
         """
-        Use rank fusion of BM25 + embedding to retrieve top-k nodes.
+        Cluster nodes and edges using KMeans.
+
+        This step is required to limit the number of LLM calls by
+        deduplicating within reasonably sized semantic clusters.
+
+        Args:
+            cluster_size: Approximate number of items per cluster.
         """
-        query_tokens = query.lower().split()
 
-        # BM25
-        bm25_scores = (
-            self.node_bm25.get_scores(query_tokens)
-            if type == "node"
-            else self.edge_bm25.get_scores(query_tokens)
-        )
+        def _cluster(items, embeddings):
+            """
+            Internal helper to cluster a list of items using KMeans.
 
-        # Embedding
-        query_embedding = self.retrieval_model.encode([query], show_progress_bar=False)
-        embeddings = self.node_embeddings if type == "node" else self.edge_embeddings
-        embedding_scores = cosine_similarity(query_embedding, embeddings).flatten()
+            Args:
+                items: List of items to cluster.
+                embeddings: Corresponding embedding vectors.
 
-        # Rank fusion (equal weighting)
-        combined_scores = 0.5 * bm25_scores + 0.5 * embedding_scores
-        top_indices = np.argsort(combined_scores)[::-1][:top_k]
-        items = self.nodes if type == "node" else self.edges
-        top_items = [items[i] for i in top_indices]
+            Returns:
+                List of clusters, each a list of items.
+            """
+            if len(items) == 0:
+                return []
 
-        return top_items
-
-    def cluster(self):
-        cluster_size = 128
-
-        embedding_sets = {"node": self.node_embeddings, "edge": self.edge_embeddings}
-
-        for embedding_type, embeddings in embedding_sets.items():
-            n_samples = len(embeddings)
-            num_clusters = max(1, n_samples // cluster_size)
-
-            # Step 1: Cluster centers
+            n_clusters = max(1, len(items) // cluster_size)
             kmeans = KMeans(
-                n_clusters=num_clusters,
+                n_clusters=n_clusters,
                 init="random",
                 n_init=1,
                 max_iter=20,
                 tol=0.0,
                 algorithm="lloyd",
-                verbose=False,
             )
             kmeans.fit(embeddings.astype(np.float32))
-            centroids = kmeans.cluster_centers_
 
-            # Step 2: Assign each point to nearest centroid (with 25 max per cluster)
-            distances = cdist(embeddings, centroids)
-            assignments = np.argsort(distances, axis=1)
+            clusters = [[] for _ in range(n_clusters)]
+            for idx, label in enumerate(kmeans.labels_):
+                clusters[label].append(items[idx])
 
-            # Initialize cluster tracking
-            clusters: List[List[int]] = [[] for _ in range(num_clusters)]
-            assigned = np.zeros(n_samples, dtype=bool)
+            return clusters
 
-            for rank in range(num_clusters):
-                for i in range(n_samples):
-                    if assigned[i]:
-                        continue
-                    cluster_id = assignments[i, rank]
-                    if len(clusters[cluster_id]) < cluster_size:
-                        clusters[cluster_id].append(i)
-                        assigned[i] = True
-
-            unassigned = np.where(~assigned)[0]
-
-            # Add unassigned items as their own cluster if any exist
-            if len(unassigned) > 0:
-                self.logger.debug(
-                    "Adding %s unassigned items as a separate cluster", len(unassigned)
-                )
-                clusters.append(unassigned.tolist())
-            else:
-                self.logger.debug("No unassigned items to add as a cluster")
-
-            # Save clusters to JSON files
-            cluster_type = embedding_type  # 'node' or 'edge'
-
-            # Print debug information about clusters
-            self.logger.debug("Number of %s clusters: %s", cluster_type, len(clusters))
-            self.logger.debug("First cluster size: %s", len(clusters[0]))
-            self.logger.debug("First few items in first cluster: %s", clusters[0][:5])
-            self.logger.debug("Last cluster size: %s", len(clusters[-1]))
-            self.logger.debug(
-                "Distribution of cluster sizes: %s...",
-                [len(clust) for clust in clusters[:5]],
+        if not self.node_clusters:
+            self.node_clusters = _cluster(
+                self.nodes, self.node_embeddings
             )
 
-            # Convert clusters to JSON-serializable format - save names instead of indices
-            if cluster_type == "node":
-                self.logger.debug("Converting node indices to node names...")
-                clusters_data = [
-                    [self.nodes[idx] for idx in cluster] for cluster in clusters
-                ]
-                self.logger.debug(
-                    "Sample of first cluster after conversion: %s", clusters_data[0][:3]
-                )
-                # Add node clusters to self
-                self.node_clusters = clusters_data
-            else:  # edge
-                self.logger.debug("Processing edge clusters...")
-                clusters_data = [
-                    [self.edges[idx] for idx in cluster] for cluster in clusters
-                ]
-                self.logger.debug(
-                    "Edge clusters data is empty: %s", len(clusters_data) == 0
-                )
-                # Add edge clusters to self
-                self.edge_clusters = clusters_data
+        if not self.edge_clusters:
+            self.edge_clusters = _cluster(
+                self.edges, self.edge_embeddings
+            )
+
+    # =========================
+    # RETRIEVAL
+    # =========================
+
+    def get_relevant_items(
+        self, query: str, top_k: int, type: str
+    ) -> list[str]:
+        """
+        Retrieve relevant candidates for a given item using
+        a hybrid BM25 + cosine similarity approach.
+
+        Args:
+            query: Query string.
+            top_k: Number of candidates to retrieve.
+            type: Either "node" or "edge".
+
+        Returns:
+            List of candidate items.
+        """
+        tokens = query.lower().split()
+
+        if type == "node":
+            bm25 = self.node_bm25
+            embeddings = self.node_embeddings
+            items = self.nodes
+        else:
+            bm25 = self.edge_bm25
+            embeddings = self.edge_embeddings
+            items = self.edges
+
+        # Sparse lexical scores
+        bm25_scores = bm25.get_scores(tokens)
+
+        # Dense semantic scores
+        query_emb = self.retrieval_model.encode(
+            [query], show_progress_bar=False
+        )
+        emb_scores = cosine_similarity(
+            query_emb, embeddings
+        ).flatten()
+
+        # Hybrid scoring
+        scores = 0.5 * bm25_scores + 0.5 * emb_scores
+        idx = np.argsort(scores)[::-1][:top_k]
+
+        return [items[i] for i in idx]
+
+    # =========================
+    # CLUSTER DEDUPLICATION
+    # =========================
 
     def deduplicate_cluster(
-        self, cluster: list[str], type: str = "node"
-    ) -> tuple[set, dict[str, list[str]]]:
+        self, cluster: list[str], type: str
+    ) -> tuple[set[str], dict[str, set[str]]]:
+        """
+        Deduplicate a single cluster using the LLM.
+
+        Args:
+            cluster: Cluster of items to deduplicate.
+            type: Either "node" or "edge".
+
+        Returns:
+            - Set of representative items.
+            - Mapping representative -> set of clustered items.
+        """
         cluster = cluster.copy()
+        representatives: set[str] = set()
+        clusters: dict[str, set[str]] = {}
 
-        items = set()
-        item_clusters = {}
-        plural_type = "entities" if type == "node" else "edges"
-        singular_type = "entity" if type == "node" else "edge"
-
-        self.logger.info(
-            "Starting deduplication of %s %s in cluster", len(cluster), plural_type
-        )
-
-        processed_count = 0
-        while len(cluster) > 0:
-            processed_count += 1
+        while cluster:
             item = cluster.pop()
 
-            self.logger.debug(
-                "[%s/%s] Processing %s: '%s'",
-                processed_count,
-                len(cluster),
-                singular_type,
-                item,
+            # Retrieve candidate duplicates
+            relevant = self.get_relevant_items(
+                item, 16, type
             )
 
-            relevant_items = self.get_relevant_items(item, 16, type)
-
-            self.logger.debug(
-                "  Found %s relevant %s for '%s'",
-                len(relevant_items),
-                plural_type,
-                item,
-            )
-            if len(relevant_items) > 0:
-                self.logger.debug(
-                    "  Sample relevant items: %s%s",
-                    relevant_items[:3],
-                    ("..." if len(relevant_items) > 3 else ""),
-                )
-
-            # Build prompt for LM-based deduplication.
-            system_prompt = (
-                f"Find duplicate {plural_type} for the item and an alias that best "
-                f"represents the duplicates. Duplicates are those that are the same "
-                f"in meaning, such as with variation in tense, plural form, stem form, "
-                f"case, abbreviation, shorthand. Return an empty list if there are none."
-            )
-            if self.context:
-                system_prompt = f"{system_prompt}\n\nContext:\n{self.context}"
-            user_prompt = (
-                "Item:\n"
-                f"{item}\n\n"
-                f"{plural_type.capitalize()} set:\n"
-                + "\n".join(f"- {candidate}" for candidate in relevant_items)
-            )
-
-            # Build JSON schema for a strict response.
+            # Build strict JSON schema for the LLM output
             schema = DeduplicateResponse.model_json_schema()
             schema["additionalProperties"] = False
 
             kwargs = {
                 "model": self.model,
                 "input": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
+                    {
+                        "role": "system",
+                        "content": "Find duplicates and an alias.",
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Item: {item}\nCandidates:\n"
+                            + "\n".join(relevant)
+                        ),
+                    },
                 ],
                 "temperature": self.temperature,
                 "text": {
                     "format": {
-                        "type": "json_schema",
                         "name": "deduplicate_response",
+                        "type": "json_schema",
                         "schema": schema,
                         "strict": True,
                     }
                 },
             }
-            if self.reasoning_effort:
-                kwargs["reasoning"] = {"effort": self.reasoning_effort}
+
+            # Optional API configuration
             if self.api_key:
                 kwargs["api_key"] = self.api_key
             if self.api_base:
                 kwargs["api_base"] = self.api_base
+            if self.reasoning_effort:
+                kwargs["reasoning"] = {
+                    "effort": self.reasoning_effort
+                }
 
+            # Call the LLM
             response = litellm.responses(**kwargs)
-            if self.usage_history is not None:
-                usage = getattr(response, "usage", None)
-                if usage is None and isinstance(response, dict):
-                    usage = response.get("usage")
-                if usage:
-                    self.usage_history.append(usage)
-            raw_json = response.output[-1].content[0].text
-            parsed = DeduplicateResponse.model_validate_json(raw_json)
-            items.add(parsed.alias)
+            raw = response.output[-1].content[0].text
+            parsed = DeduplicateResponse.model_validate_json(raw)
 
-            # Filter duplicates to only include those that exist in the cluster
-            duplicates = [dup for dup in parsed.duplicates if dup in cluster]
+            alias = parsed.alias
+            representatives.add(alias)
+            clusters.setdefault(alias, {item})
 
-            if len(duplicates) > 0:
-                self.logger.debug(
-                    "  ✓ Found %s duplicates for '%s'", len(duplicates), item
-                )
-                self.logger.info(
-                    "  → Using alias '%s' to represent: '%s' and %s",
-                    parsed.alias,
-                    item,
-                    duplicates,
-                )
-                item_clusters[parsed.alias] = {item}
-                for duplicate in duplicates:
-                    cluster.remove(duplicate)
-                    item_clusters[parsed.alias].add(duplicate)
-            else:
-                self.logger.debug(
-                    "  ✗ No duplicates found for '%s', keeping as is", item
-                )
-                item_clusters[item] = {item}
+            # Remove duplicates from the working cluster
+            for dup in parsed.duplicates:
+                if dup in cluster:
+                    cluster.remove(dup)
+                    clusters[alias].add(dup)
 
-        self.logger.debug(
-            "Deduplication complete: %s unique %s from original %s",
-            len(items),
-            plural_type,
-            processed_count,
-        )
+        return representatives, clusters
 
-        return items, item_clusters
+    # =========================
+    # FINAL DEDUPLICATION
+    # =========================
 
     def deduplicate(self) -> Graph:
-        # Check if intermediate progress exists and load it
-        entities = set()
-        edges = set()
-        entity_clusters = {}
-        edge_clusters = {}
+        """
+        Perform full graph deduplication.
 
-        pool = ThreadPoolExecutor(max_workers=64)
+        Returns:
+            A new Graph instance with:
+            - Deduplicated entities and edges
+            - Rewritten relations
+            - Explicit entity and edge clusters
+        """
+        entities: set[str] = set()
+        edges: set[str] = set()
+        entity_clusters: dict[str, set[str]] = {}
+        edge_clusters: dict[str, set[str]] = {}
 
-        # Process node clusters in parallel
-        node_futures = []
-        cnt_nodes = 0
-        for i, cluster in enumerate(self.node_clusters):
-            cnt_nodes += len(cluster)
-            node_futures.append(pool.submit(self.deduplicate_cluster, cluster, "node"))
+        # Parallelize cluster-level deduplication
+        pool = ThreadPoolExecutor(max_workers=32)
 
-        # Process edge clusters in parallel
-        edge_futures = []
-        cnt_edges = 0
-        for i, cluster in enumerate(self.edge_clusters):
-            cnt_edges += len(cluster)
-            edge_futures.append(pool.submit(self.deduplicate_cluster, cluster, "edge"))
+        node_futures = [
+            pool.submit(
+                self.deduplicate_cluster, c, "node"
+            )
+            for c in self.node_clusters
+        ]
+        edge_futures = [
+            pool.submit(
+                self.deduplicate_cluster, c, "edge"
+            )
+            for c in self.edge_clusters
+        ]
 
-        # Collect results from node futures
-        for i, future in enumerate(node_futures):
-            try:
-                cluster_entities, cluster_entity_map = future.result()
-                entities.update(cluster_entities)
-                entity_clusters.update(cluster_entity_map)
-            except Exception as e:
-                self.logger.error("Error processing node cluster %s: %s", i, e)
+        for f in node_futures:
+            reps, clusters = f.result()
+            entities.update(reps)
+            entity_clusters.update(clusters)
 
-        # Collect results from edge futures
-        for i, future in enumerate(edge_futures):
-            try:
-                cluster_edges, cluster_edge_map = future.result()
-                edges.update(cluster_edges)
-                edge_clusters.update(cluster_edge_map)
-            except Exception as e:
-                self.logger.error("Error processing edge cluster %s: %s", i, e)
+        for f in edge_futures:
+            reps, clusters = f.result()
+            edges.update(reps)
+            edge_clusters.update(clusters)
 
-        self.logger.info(
-            "Finished processing all clusters with %s nodes and %s edges LLM calls",
-            cnt_nodes,
-            cnt_edges,
-        )
+        # Rewrite relations using deduplicated representatives
+        new_relations: set[tuple[str, str, str]] = set()
 
-        # Update relations based on clusters
-        relations: set[tuple[str, str, str]] = set()
+        for s, p, o in self.relations:
+            for rep, cl in entity_clusters.items():
+                if s in cl:
+                    s = rep
+                if o in cl:
+                    o = rep
+            for rep, cl in edge_clusters.items():
+                if p in cl:
+                    p = rep
+            new_relations.add((s, p, o))
 
-        for s, p, o in self.graph.relations:
-            # Look up subject in entity clusters
-            if s not in entities:
-                for rep, cluster in entity_clusters.items():
-                    if s in cluster:
-                        s = rep
-                        break
+        # Graph requires a dict for entities, not a set
+        entity_dict = {e: "" for e in entities}  # placeholder reasoning
+        edge_set = set(edges)
 
-            # Look up predicate in edge clusters
-            if p not in edges:
-                for rep, cluster in edge_clusters.items():
-                    if p in cluster:
-                        p = rep
-                        break
-
-            # Look up object in entity clusters
-            if o not in entities:
-                for rep, cluster in entity_clusters.items():
-                    if o in cluster:
-                        o = rep
-                        break
-
-            relations.add((s, p, o))
-
-        # Update entity_metadata keys to match deduplicated entity names
-        new_entity_metadata: dict[str, set[str]] | None = None
-        if self.graph.entity_metadata:
-            new_entity_metadata = {}
-            for original_entity, metadata_set in self.graph.entity_metadata.items():
-                # Find the deduplicated representative for this entity
-                deduped_entity = original_entity
-                for rep, cluster in entity_clusters.items():
-                    if original_entity in cluster:
-                        deduped_entity = rep
-                        break
-                # Merge metadata sets when entities are deduplicated together
-                if deduped_entity in new_entity_metadata:
-                    new_entity_metadata[deduped_entity].update(metadata_set)
-                else:
-                    new_entity_metadata[deduped_entity] = metadata_set.copy()
-
-        # Create new Graph instance with deduplicated data
-        deduped_graph = Graph(
-            entities=entities,
-            edges=edges,
-            relations=relations,
+        return Graph(
+            entities=entity_dict,
+            edges=edge_set,
+            relations=new_relations,
             entity_clusters=entity_clusters,
             edge_clusters=edge_clusters,
-            entity_metadata=new_entity_metadata,
+            entity_metadata=None,
         )
-
-        return deduped_graph

@@ -18,18 +18,18 @@ def parse_relations_response(
     and filters out invalid items.
 
     Args:
-        - raw_json: Raw JSON string from the LLM response.
-        - entities: List of valid entity strings used for validation.
-        response_model: Optional Pydantic model used for strict validation.
+        raw_json (str): Raw JSON string from the LLM response.
+        entities (List[str]): List of valid entity strings used for validation.
+        response_model (Optional[Type[BaseModel]]): Pydantic model for strict validation.
 
     Returns:
         List[Tuple[str, str, str]]: List of (subject, predicate, object)
         tuples with valid entities only.
     """
-    # Use a set for O(1) membership checks.
+    # Convert entity list to a set for fast membership checks
     entities_set = set(entities)
 
-    # Try strict Pydantic validation first if a model is provided.
+    # Attempt strict validation with Pydantic if a model is provided
     if response_model is not None:
         try:
             parsed = response_model.model_validate_json(raw_json)
@@ -44,12 +44,13 @@ def parse_relations_response(
     except json.JSONDecodeError:
         return []
 
-    # Handle both {"relations": [...]} and direct list formats.
+    # Handle both {"relations": [...]} and direct list formats
     items = data.get("relations", data) if isinstance(data, dict) else data
 
     if not isinstance(items, list):
         return []
-
+    
+    # Filter and validate each relation item
     relations = []
     for item in items:
         if not isinstance(item, dict):
@@ -82,21 +83,20 @@ def _load_relations_prompt() -> str:
     # Resolve the prompt path relative to this module.
     prompt_path = Path(__file__).parent.parent / "prompts" / "relations.txt"
     # Read the full prompt text as UTF-8.
-    return prompt_path.read_text()
+    return prompt_path.read_text(encoding="utf-8")
 
 
 def _create_relations_model(entities: List[str]):
     """
-    Create Pydantic models with entity-constrained subject/object fields.
+    Dynamically create Pydantic models with entity-constrained subject/object fields.
 
     Args:
-        - entities: List of valid entity strings used to constrain subject/object.
+        entities (List[str]): List of valid entity strings to constrain subject/object fields.
 
     Returns:
         tuple: (RelationItem, RelationsResponse) Pydantic model classes.
     """
-    # Create a Literal type from the entities list.
-    # Caller must ensure entities is non-empty to avoid Literal[()].
+    # Convert entities list into a Literal type for strict validation
     EntityLiteral = Literal[tuple(entities)]  # type: ignore
 
     # Create RelationItem with constrained subject/object.
@@ -126,22 +126,21 @@ def _get_relations_litellm(
     usage_history: Optional[list[dict]] = None,
 ) -> List[Tuple[str, str, str]]:
     """
-    Extract relations using LiteLLM with a JSON schema response.
+    Extract relations from text using LiteLLM with strict JSON schema validation.
 
     Args:
-        - input_data: Source text to analyze for relations.
-        - entities: Entity list used to constrain subject/object values.
-        - model: LLM model identifier.
-        - api_key: Optional API key override.
-        - api_base: Optional API base URL override.
-        - temperature: Sampling temperature for the LLM call.
-        - usage_history: Optional list to accumulate LiteLLM usage dicts.
+        input_data (str): Source text to analyze for relations.
+        entities (List[str]): Entity list used to constrain subject/object values.
+        model (str): LLM model identifier.
+        api_key (Optional[str]): Optional API key override.
+        api_base (Optional[str]): Optional API base URL override.
+        temperature (float): Sampling temperature for the LLM call.
+        usage_history (Optional[list[dict]]): Optional list to record LiteLLM usage.
 
     Returns:
-        List[Tuple[str, str, str]]: List of extracted (subject, predicate, object)
-        relation triples.
+        List[Tuple[str, str, str]]: Extracted (subject, predicate, object) triples.
     """
-    # If there are no entities, there cannot be any relations.
+    # Return empty if no entities are provided
     if not entities:
         return []
 
@@ -151,26 +150,26 @@ def _get_relations_litellm(
     entities_str = "\n".join(f"- {e}" for e in entities)
     # Build the user prompt with entities and the source text.
     user_prompt = f"""
-Here is the list of entities that were previously extracted from the source text:
+    Here is the list of entities that were previously extracted from the source text:
 
-<entities>
-{entities_str}
-</entities>
+    <entities>
+    {entities_str}
+    </entities>
 
-Here is the source text to analyze:
+    Here is the source text to analyze:
 
-<text>
-{input_data}
-</text>
+    <text>
+    {input_data}
+    </text>
     """
 
     # Create dynamic model with entity constraints.
     _, RelationsResponse = _create_relations_model(entities)
 
-    # Build schema with additionalProperties: false (required by OpenAI).
+    # Generate JSON schema from Pydantic model
     schema = RelationsResponse.model_json_schema()
     schema["additionalProperties"] = False
-    # Also set additionalProperties on nested objects.
+    # Ensure nested object schemas also disallow extra properties
     if "$defs" in schema:
         for def_schema in schema["$defs"].values():
             if def_schema.get("type") == "object":
@@ -194,7 +193,7 @@ Here is the source text to analyze:
         },
     }
 
-    # Inject provider overrides only when explicitly supplied.
+    # Optional overrides for API key/base
     if api_key:
         kwargs["api_key"] = api_key
     if api_base:
@@ -202,29 +201,32 @@ Here is the source text to analyze:
 
     # Execute the LLM call.
     response = litellm.responses(**kwargs)
+
+    # Optionally log usage statistics
     if usage_history is not None:
         usage = getattr(response, "usage", None)
         if usage is None and isinstance(response, dict):
             usage = response.get("usage")
         if usage:
             usage_history.append(usage)
-    # Extract the raw JSON string from the response.
+
+    # Extract raw JSON from response
     raw_json = response.output[-1].content[0].text
-    # Parse and validate relations with fallback filtering.
+
+    # Parse and validate relations, fallback to safe filtering if needed
     return parse_relations_response(raw_json, entities, RelationsResponse)
 
 
 def _filter_entities(entities: List[str]) -> List[str]:
     """
-    Filter out entities that contain quotes to avoid API parsing issues.
+    Remove entities containing double quotes to prevent API parsing errors.
 
     Args:
-        - entities: Raw entity strings from extraction.
+        entities (List[str]): Raw entity strings.
 
     Returns:
-        List[str]: Filtered entity list safe for prompt inclusion.
+        List[str]: Filtered list of safe entities for prompt usage.
     """
-    # Exclude entities containing double quotes (not accepted by the API).
     return [e for e in entities if '"' not in e]
 
 
@@ -240,23 +242,23 @@ def get_relations(
     usage_history: Optional[list[dict]] = None,
 ) -> List[Tuple[str, str, str]]:
     """
-    Public API to extract relations from input text.
+    Public API for extracting relations from a text source.
 
     Args:
-        - input_data: Source text to analyze.
-        - entities: Entity list to constrain relation extraction.
-        - is_conversation: Whether the input represents dialogue. Currently unused.
-        - context: Optional context string. Currently unused by this implementation.
-        - model: LLM model identifier to use.
-        - api_key: Optional API key override.
-        - api_base: Optional API base URL override.
-        - temperature: Sampling temperature for the LLM call.
-        - usage_history: Optional list to accumulate LiteLLM usage dicts.
+        input_data (str): Source text for relation extraction.
+        entities (list[str]): Entity list to constrain subject/object.
+        is_conversation (bool): Whether the input is a conversation (currently unused).
+        context (str): Optional context string (currently unused).
+        model (Optional[str]): LLM model identifier.
+        api_key (Optional[str]): Optional API key override.
+        api_base (Optional[str]): Optional API base URL override.
+        temperature (float): Sampling temperature for the LLM call.
+        usage_history (Optional[list[dict]]): Optional list to record LiteLLM usage.
 
     Returns:
-        List[Tuple[str, str, str]]: Extracted relation triples.
+        List[Tuple[str, str, str]]: Extracted relation triples (subject, predicate, object).
     """
-    # Filter out entities that are problematic for the API.
+    # Remove entities that contain quotes to prevent API parsing issues
     entities = _filter_entities(entities)
     if not entities:
         return []

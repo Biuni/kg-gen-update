@@ -7,13 +7,18 @@ from ..utils.llm_deduplicate import LLMDeduplicate
 
 
 class DeduplicateMethod(enum.Enum):
-    """Supported deduplication strategies."""
+    """
+    Enum representing the supported graph deduplication strategies.
+    """
 
-    # Deduplicate using deterministic rules and semantic hashing.
+    # Deduplicate deterministically using semantic hashing.
     SEMHASH = "semhash"
-    # Deduplicate using KNN clustering + intra-cluster LM deduplication.
+
+    # Deduplicate by clustering nodes with embeddings and using an LLM to
+    # identify duplicates within each cluster.
     LM_BASED = "lm_based"
-    # Deduplicate using both semantic hashing and LM-based clustering.
+
+    # Apply both semantic hashing and LM-based clustering sequentially.
     FULL = "full"
 
 
@@ -31,29 +36,35 @@ def run_deduplication(
     usage_history: list[dict] | None = None,
 ) -> Graph:
     """
-    Run graph deduplication with the selected strategy.
+    Deduplicate a graph using the specified strategy.
+
+    This function supports three strategies:
+    1. SEMHASH: Uses deterministic rules and semantic hashing.
+    2. LM_BASED: Uses embedding-based clustering plus LLM-assisted deduplication.
+    3. FULL: Runs SEMHASH first, then LM-based clustering on the reduced graph.
 
     Args:
-        - graph: Input Graph to deduplicate.
-        - method: Deduplication strategy to run.
-        - retrieval_model: SentenceTransformer used for semantic similarity.
-            Required for LM-based and FULL methods.
-        - semhash_similarity_threshold: Similarity threshold used by semantic
-            hashing; higher values are more conservative.
-        - model: LLM model identifier for LM-based deduplication.
-        - api_key: Optional API key override for the LLM provider.
-        - api_base: Optional API base URL override for the LLM provider.
-        - temperature: Optional sampling temperature override.
-        - reasoning_effort: Optional reasoning effort for supported providers.
-        - context: Optional context string to guide LM-based deduplication.
-        - usage_history: Optional list to accumulate LiteLLM usage dicts.
+        graph (Graph): Input graph to deduplicate.
+        method (DeduplicateMethod): Deduplication strategy to run.
+        retrieval_model (SentenceTransformer | None): Model for semantic similarity.
+            Required for LM_BASED or FULL methods.
+        semhash_similarity_threshold (float): Threshold for semantic hashing similarity.
+            Higher values are more conservative.
+        model (str | None): LLM model identifier for LM-based deduplication.
+        api_key (str | None): Optional API key for the LLM provider.
+        api_base (str | None): Optional API base URL for the LLM provider.
+        temperature (float | None): Optional sampling temperature for the LLM.
+        reasoning_effort (str | None): Optional reasoning effort for LLM deduplication.
+        context (str | None): Optional context to guide LM-based deduplication.
+        usage_history (list[dict] | None): Optional list to accumulate LiteLLM usage stats.
 
     Returns:
-        Graph: Deduplicated graph with updated clusters when applicable.
+        Graph: Deduplicated graph. Clusters are updated if LM-based methods were applied.
 
     Raises:
-        ValueError: If an LM-based method is selected without a retrieval model.
+        ValueError: If LM-based method is selected but no retrieval model is provided.
     """
+
     # LM-based methods require a retrieval model for similarity search.
     if method != DeduplicateMethod.SEMHASH and retrieval_model is None:
         raise ValueError("No retrieval model provided")
@@ -63,6 +74,7 @@ def run_deduplication(
         deduplicated_graph = run_semhash_deduplication(
             graph, semhash_similarity_threshold
         )
+
     elif method == DeduplicateMethod.LM_BASED:
         # Cluster with embeddings and deduplicate within clusters using LM.
         llm_deduplicate = LLMDeduplicate(
@@ -78,6 +90,7 @@ def run_deduplication(
         )
         llm_deduplicate.cluster()
         deduplicated_graph = llm_deduplicate.deduplicate()
+        
     elif method == DeduplicateMethod.FULL:
         # Run semantic hashing first, then LM-based clustering on the reduced graph.
         deduplicated_graph = run_semhash_deduplication(

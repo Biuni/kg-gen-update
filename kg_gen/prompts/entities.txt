@@ -1,191 +1,289 @@
-You are an information extraction system for building a Knowledge Graph.
-You will be given a technical specification that defines the only allowed classes in the ontology.
-Your task is to extract all entities explicitly or implicitly present in the text, strictly instantiating only the classes listed below, and return them as a deduplicated list.
-You MUST NOT invent new classes or subclasses.
+You are an information extraction system for building an auditable execution trace as a Knowledge Graph. 
+You will be given a piece of text, which contains both structured execution anchors and a reasoning section:
 
-## Module `trace:` — Execution trace and time
+* **Explicit metadata**: Lines following patterns @agent, @state, @user, @task, @run , @step, @observation,
+    @termination anchors represent structured execution data. Entities belonging to the following modulesmust be created only from these explicit anchors.
+  Don't infer o rreconstruct these entities from reasoning text.
+
+* **Agent reasoning content**: The natural language reasonings produced by the agent appears only inside the @start_reasoning(step_id=<id>)
+   ... @end_reasoning(step_id=<id>)
+  The following entities must be extracted exclusively from this reasoning blocks: mind:Statement, mind:Goal, mind:Intention, mind:Plan, 
+  mind:Precondition, act:Tool, act:ToolCall, act:ActionIntent, act:ActionExecution.
+
+Your task is to extract entities according to the ontology below, associating them with either:
+- the explicit anchor or
+- the relevant reasoning statement
+You must instantiate only the classes listed, never invent new classes or subclasses.
+
+# Available Tools
+The following external tools are available. Each tool has a canonical identifier that must be used when creating Tool nodes:
+
+- calculator → `Tool_Calculator`
+- search → `Tool_Search`
+- database → `Tool_Database`
+- shell → `Tool_Shell`
+- calendar → `Tool_Calendar`
+
+# Onthology
+
+
+## Module `trace`
+
 
 ### Class `trace:Run`
 
-* **Meaning**: A single end-to-end execution instance of an agent responding to a user request (or session segment). It is the top container used to scope steps, policies, and state.
-* **When to create**: Exactly once per agent run/session you want to verify.
-* **Notes**: A Run is the natural scope for incremental KG updates and for policy application (“within this run”).
+* **Meaning**: A trace:Run represents a single, system-defined execution scope of an agent. It is the top-level container for all 
+reasoning steps, agent state, actions, and policies occurring during that execution.
+* **When to create**: A trace:Run must be created only if the following explicit anchor pattern is present in the input: 
+@run(id=<RUN_ID>), where <RUN_ID> is a system-generated identifier. 
+* **Extraction Behavior**: Assign the Run identifier to the value of <RUN_ID>. If no @run(...) anchor is present, do not create 
+a trace:Run. Exactly one and only one trace:Run must exist.
 
 ### Class `trace:Step`
 
-* **Meaning**: The atomic time unit of the agent’s deliberation cycle, corresponding to **one LLM reasoning output** (as you defined). A Step occurs *before* any tool call is executed, and is the unit at which guardrail decisions are made.
-* **When to create**: Once for each reasoning message produced by the agent model.
-* **Notes**: Steps impose a sequential ordering using `trace:stepIndex`. Even though execution is sequential, Step also acts as an anchor for “what was known/decided at that moment”.
+* **Meaning**: A `trace:Step` represents a single atomic deliberation unit of the agent, corresponding to **one LLM reasoning output**.
+* **When to create**: A `trace:Step` MUST be created **only** when the following explicit anchor is present: 
+@step(id="<STEP_ID>", index=<STEP_INDEX>)
+* **Extraction Behavior**: Assign the step id to the value of <STEP_ID>, and the step index to <STEP_INDEX>. If no 
+@step(id="<STEP_ID>", index=<STEP_INDEX>) anchor is present, do not create a trace:Step.
 
 ### Class `trace:Agent`
 
 * **Meaning**: The acting entity (LLM-based agent) whose behavior is being represented and verified.
-* **When to create**: Once per Run (or per distinct agent identity/configuration if runs may involve multiple agents).
-* **Notes**: Keep generic. Specializations can add configuration, model version, tool permissions profile, etc.
+* **When to create**: A trace:Agent must be created only when the following explicit anchor is present:
+@agent(id="<AGENT_ID>","model="<MODEL>")
+* **Extraction Behavior**: Assign the Agent identifier to <AGENT_ID>, the attribute trace:model to <MODEL>. If the anchor 
+is not present, do not create a trace:Agent
 
 ### Class `trace:User`
 
 * **Meaning**: The user interacting with the agent.
-* **When to create**: Once per Run (or refer to an existing user node across runs if you later want cross-run reasoning; you said you don’t need multi-tenancy).
-* **Notes**: User identity is mostly useful for consent and correctness policies. You can keep it minimal.
+* **When to create**: A trace:User MUST be created only when the following explicit anchor is present: @user(id=<USER_ID>)
+* **Extraction Behavior**: Assign the User identifier to <USER_ID>. If the anchor @user(id=<USER_ID>) is not present, do not 
+create a trace:User 
 
 ---
 
-## Module `mind:` — Auditable reasoning, plans, and preconditions
+## Module `mind` 
+
 
 ### Class `mind:Statement`
 
-* **Meaning**: An **auditable, atomic assertion** extracted from the agent’s reasoning text. This is the core representation of “what the agent says it believes/intends/assumes” in a form usable by verification without storing CoT.
-* **When to create**: Whenever the reasoning contains a discrete, checkable claim (intent, requirement, permission, assumption, constraint, etc.).
-* **Notes**: “Atomic” means it should be as decomposed as needed for policy checks. Specializations can add richer structure; v1 guarantees at least `mind:text` and `mind:assertedIn`.
+**Meaning**  
+A `mind:Statement` represents a **single, atomic, auditable claim or assertion** made by the agent in its reasoning.  
+It captures **what the agent believes, assumes, requires, permits, or predicts** in a form that can be formally verified at runtime, **without storing the full reasoning trace**.
 
-### Class `mind:Goal` (subclass of Statement)
+**When to create**  
+- Create a `mind:Statement` whenever the reasoning contains a **checkable assertion** that **cannot be classified as Goal, Intention, Precondition, Postcondition, PermissionClaim, or TerminationSignal**.  
+- Typical examples:  
+  - **Assumptions:** `"I assume the database has been updated."`  
+  - **Constraints:** `"Before calling the tool, the input must be sanitized."`  
+  - **Observations or factual claims:** `"The user has requested the precise decimal result."`  
+- **Do not create** a generic Statement for claims already covered by specialized subclasses (Goal, Intention, etc.).
 
-* **Meaning**: A Statement expressing a desired outcome to be achieved (task-level or subtask-level).
-* **When to create**: When reasoning expresses a target outcome (“I need to find…”, “Goal is to…”).
-* **Notes**: Goals are used for correctness checks and plan coherence. A goal is not necessarily an action.
+**Extraction Behavior**  
+- Extract the **smallest atomic phrase** that conveys the claim; avoid including extra justification or explanatory text.  
+- Associate the Statement with the **Step** in which it is expressed.  
+- Do **not merge or cluster** this Statement with Goals, Intentions, or any other specialized class.  
+- Ensure each Statement is **auditable and independently verifiable**.
 
-### Class `mind:Intention` (subclass of Statement)
+**Notes / Guidance**  
+- `mind:Statement` acts as the **fallback class for any auditable content** in reasoning that is not a goal, next-step action, pre/postcondition, permission, or termination signal.  
+- Its purpose is to **preserve checkable knowledge** for runtime verification, even if the reasoning text does not explicitly express a Goal or Intention.  
+- Always extract **atomic, clearly defined claims** to maintain integrity and avoid over-clustering.
 
-* **Meaning**: A Statement expressing the agent’s commitment to a course of action or plan step (“I will do X next…”)—stronger than a goal.
-* **When to create**: When reasoning indicates the next intended step(s) or decisions.
-* **Notes**: Intention is often what should justify an ActionIntent.
+**Key operational rule for the generator:**  
+- `mind:Statement` = auditable claim that is **not a Goal or Intention**.  
+- Goal = desired outcome.  
+- Intention = committed next-step action.  
+- **Never merge or cluster Statements with Goals or Intentions.**
 
-### Class `mind:Plan`
+### Class `mind:Goal` 
 
-* **Meaning**: A structured container representing the plan as of a given Step: the set of intended items (goals, intentions, action intents) and their ordering/dependency relations.
-* **When to create**: When the agent produces any explicit/implicit plan structure in reasoning (even a one-step plan).
-* **Notes**: Plan nodes support revisions (`mind:revises`) and allow “premature/out-of-order” detection in a principled way.
+* **Meaning**: A Goal represents a **desired outcome** the agent aims to achieve. 
+  It is the **target state**, not an action.  
 
-### Class `mind:Precondition` (subclass of Statement)
+* **When to create**: 
+  - Extract only statements that express a desired result or objective, e.g.:  
+      - "The goal is to multiply 20 by 30.1 and divide by 13."  
+      - "Wait, but the user might want the exact decimal or a fraction."  
+      - "Goal: identify all files containing confidential data."  
+  - **Do not include** statements describing an action, plan, or next step.
 
-* **Meaning**: A Statement representing a condition that must hold before an action/tool invocation is allowed or meaningful.
-* **When to create**: When reasoning states prerequisites (“Before calling tool T, I need…”, “Must have consent”, “Need credentials”, etc.).
-* **Notes**: Preconditions are the main way to formalize “premature tool call” without heuristics.
+* **Extraction Behavior**: 
+  - Extract **the smallest atomic phrase** expressing the outcome.  
+  - Associate it with the Step in which it is mentioned.  
+  - **Never cluster a Goal with an Intention**, even if phrased similarly.
 
-### Class `mind:Postcondition` (subclass of Statement)
+### Class `mind:Intention` 
 
-* **Meaning**: A Statement representing an expected condition after an action executes.
-* **When to create**: When reasoning predicts outcomes (“After the tool call, I will have…”, “This will create file…”).
-* **Notes**: Postconditions are useful for correctness and integrity checks (e.g., action executed but postcondition not satisfied by observation/state).
+* **Meaning**: An Intention represents the agent's **commitment to perform a specific next action** to achieve a goal.  
+  It is an **action step**, not a desired outcome.
 
-### Class `mind:PermissionClaim` (subclass of Statement)
+* **When to create**: 
+  - Extract statements expressing **planned or committed actions**, e.g.:  
+      - "I will calculate 20 * 30.1 first."  
+      - "Next, I will divide the result by 13."  
+      - "I intend to call the calculator tool with '(20*30.1)/(10+3)'."  
+  - **Do not include** abstract outcomes or goals; those belong to `mind:Goal`.
 
-* **Meaning**: A Statement asserting that a tool/resource/action is authorized (“I am allowed to use Tool X”).
-* **When to create**: When reasoning explicitly asserts permission, policy compliance, or authorization.
-* **Notes**: In a strict formal system, absence of permission claim can be treated as unauthorized (closed-world assumption at policy level).
+* **Extraction Behavior**: 
+  - Extract **the minimal phrase describing the next step/action**.  
+  - Associate it with the Step in which it is expressed.  
+  - **Never cluster an Intention with a Goal**, even if both refer to the same task.  
+  - If multiple actions are in one sentence, create **separate Intention entities**.
 
 ### Class `mind:TerminationSignal` (subclass of Statement)
 
-* **Meaning**: A Statement indicating that execution is approaching termination or completion (“Done”, “No further actions needed”).
-* **When to create**: When reasoning indicates completion or stopping conditions.
-* **Notes**: Enables formal checks like “termination while requirements unsatisfied”.
+* **Meaning**: A **Statement indicating that execution is complete or a step has finished**, signaling that no further actions are required.  
+  This allows runtime verification to detect proper termination of a Step or Run.
 
-### Class `mind:UserConsent` (subclass of Precondition)
+* **When to create**:  
+  - When reasoning contains a **recognized termination anchor**, such as:  
+    - `@termination`  
+    - `"Done."`  
+    - `"No further actions needed."`  
+    - `"Task complete."`  
+    - `"Answer provided."`  
 
-* **Meaning**: A specialized Precondition stating that explicit user consent must be obtained prior to executing an action.
-* **When to create**: When policies or reasoning indicate consent is required for a planned tool call.
-* **Notes**: This is the clean hook for Ask-guardrails. Satisfaction of consent should be modeled via explicit user message evidence (you can add that later).
+* **Extraction Behavior**:  
+  - Scan the reasoning text for **explicit termination anchors**.  
+  - If an anchor is found, create a `mind:TerminationSignal` node associated with the relevant Step.  
+  - This node represents **completion**, not an action, goal, or plan.
+
+* **Key Principle**:  
+  - Serves as a formal signal for **runtime verification and auditing**.  
+  - Ensures that **steps are not considered ongoing** after the termination signal is present.  
+  - Distinct from Goals, Intentions, Statements, or Plans.
 
 ---
-## Module `act:` — Tools, action intents, execution
+
+## Module `act`
+
 
 ### Class `act:Tool`
 
-* **Meaning**: A type of external capability the agent can invoke (search, calendar, shell, DB, etc.).
-* **When to create**: Whenever a tool is referenced by any ToolCall.
-* **Notes**: You stated a universal tool universe; this stays generic and open.
+* **Meaning**: Represents a **specific type of external capability** (tool, API, service, or command).  
+  Each Tool node must be instantiated using **exactly the canonical identifier** from the available tool list (e.g., `Tool_Calculator`, `Tool_Search`) 
+  **without adding any prefixes**, as the node identifier.
+
+* **When to create**:  
+  - Whenever reasoning explicitly mentions a tool, API, service, or command.  
+  - A Tool node **must exist** if there is any corresponding `ToolCall` to that tool.
+
+* **Extraction Behavior**:  
+  - Match the tool mentioned in reasoning to the canonical identifier in the tool list.  
+  - **Create the node using the canonical identifier as the node name** (e.g., `act:Tool_Calculator`).    
+  - Do **not invent tools** not in the official tool list.  
+  - Do not prepend `act:Tool_` or any other prefix to the canonical name.
+
+**Example Mapping:**
+
+| Reasoning Text                                                                 | Tool Node Created       |
+|--------------------------------------------------------------------------------|-------------------------|
+| "I should call the calculator function with the expression '(20*30.1)/13'"     | `Tool_Calculator`       |
+| "Using the calc tool would handle the exact calculation"                       | `Tool_Calculator`       |
+| "Let me evaluate this expression using a calculator"                           | `Tool_Calculator`       |
+| "I need to compute 20 times 30.1 divided by 13"                                | `Tool_Calculator`       |
+| "To get the precise result, I will calculate (20*30.1)/(10+3)"                 | `Tool_Calculator`       |
+| "Multiplying 20 by 30.1 and dividing by 13 requires a calculator"              | `Tool_Calculator`       |
+| "Compute the decimal value of 602 divided by 13"                               | `Tool_Calculator`       |
+| "Solve the expression (20 * 30.1)/(10+3)"                                      | `Tool_Calculator`       |
+| "I will use the calculator to verify the result"                               | `Tool_Calculator`       |
+| "Check the calculation manually or with a calc tool"                           | `Tool_Calculator`       |
+| "Invoke search API with query 'KGGen'"                                         | `Tool_Search`           |
+| "Access the database to fetch user info"                                       | `Tool_Database`         |
+
 
 ### Class `act:ToolCall`
 
-* **Meaning**: A concrete invocation specification for a tool, including full arguments (as required) and optional targets.
-* **When to create**: Whenever reasoning produces an intended tool invocation.
-* **Notes**: ToolCall represents *what will be called*, independent of whether it is executed.
-
-### Class `act:ActionIntent`
-
-* **Meaning**: The agent’s intention to execute a ToolCall (i.e., a planned/proposed action at a given step).
-* **When to create**: Whenever the reasoning indicates a tool call is about to be performed.
-* **Notes**: This is the principal object of verification and guardrails.
-
-### Class `act:ActionExecution`
-
-* **Meaning**: The event that the intended action was actually executed (after being allowed).
-* **When to create**: Only after a decision allows execution and the tool invocation is performed.
-* **Notes**: Separating intent and execution ensures “verify before acting”.
-
-### Class `act:Resource`
-
-* **Meaning**: Any entity the tool call targets or affects (file path, URL, database entry, memory key, etc.).
-* **When to create**: When targets can be extracted from arguments or reasoning.
-* **Notes**: Kept generic (no sensitivity taxonomy in v1). Specializations can refine resource typing.
+* **Meaning**: A concrete invocation specification for a tool, including full arguments, targets, and optional parameters.
+**When to create**:  
+  - Whenever reasoning contains a statement of intent or plan to invoke a tool (e.g., "I will call Tool X with arguments A and B").  
+  - **Every ToolCall implies the existence of a corresponding Tool node**.
+* **Extraction Behavior**: Extract the tool name, the parameters, and any specified targets. Associate the ToolCall with the Step in which the intention is expressed. 
+  ToolCalls are derived from reasoning content, not from trace metadata.
+  - ToolCalls represent the **concrete invocation**, while Tools represent the **tool type**.
+* Every ToolCall is an ActionExecution, so, every ToolCall also implies the creation of a corresponding ActionExecution.
 
 ---
 
-## Module `obs:` — Tool outputs as evidence
+## Module `obs:` 
+
 
 ### Class `obs:Observation`
 
-* **Meaning**: A recorded output from a tool execution (or environment observation) that can be used as evidence for satisfaction of requirements and postconditions.
-* **When to create**: After a tool execution returns output.
-* **Notes**: In v1 it’s raw; specializations can parse structured fields into nodes for richer checks.
+* **Meaning**: A obs:Observation is a discrete piece of information recorded as output from a tool execution or from the environment.    
+* **When to create**: A obs:Observation must be created only when the following explicit anchor is present: 
+    @observation(
+      tool=<tool>,
+      output=<output>
+    )  
+* **Extraction Behavior**: Assign the obs:Observation id to the value <tool>_<output>. If no @observation(tool=<tool>, output=<output>)   
+    anchor is present, do not create a trace:Step.
 
 ---
 
-## Module `state:` — Internal/persistent state and reversibility
+## Module `state:` 
+
 
 ### Class `state:State`
 
-* **Meaning**: Represents the *current* known state of the agent and relevant environment abstractions (as tracked by the KG).
-* **When to create**: Once per Run (and maintain as a live structure).
-* **Notes**: This enables incremental updates without storing per-step snapshots.
+* **Meaning**: A state:State represents the current known state of the agent and relevant environment variables at a given point 
+in time.  
+* **When to create**: A state:State must be created only when the following explicit anchor is present:
+    @state(
+            id=<id>
+            calculator_ready=<calculator_ready>,                  
+            search_ready=<search_ready>,                     
+            database_connected=<database_connected>,               
+            last_user_input=<last_user_input>,  
+            current_step_index=<current_step_index>,                   
+            intentions_pending=<intentions_pending>,  
+            last_action_intent=<last_action_intent>,      
+            last_tool_call=<last_tool_call>,         
+            last_tool_output=<last_tool_output>,                  
+            termination_flag=<termination_flag>                
+        )
+* **Extraction behavior**: Assign the state id to the value of <id>. If no 
+    @state anchor is present, do not create a state:State
 
-### Class `state:StateVar`
+### Class `state:Calculator_ready`
 
-* **Meaning**: A named state slot capturing some internal variable or persistent attribute (e.g., current objective, tool budget, memory key, working directory).
-* **When to create**: When internal state elements are referenced or need to be tracked for policies.
-* **Notes**: Generic key-value representation is intentional.
-
-### Class `state:StateUpdate`
-
-* **Meaning**: A discrete update operation that changes state (internal or external) and is linked to the step in which it occurred.
-* **When to create**: Whenever the agent modifies state: memory write, file write, DB update, internal variable change, undo operation, etc.
-* **Notes**: Even though you “don’t need an event log”, you need update nodes to support integrity/reversibility reasoning. The KG still remains an incrementally updated structure.
-
-### Class `state:StateValue` *(optional)*
-
-* **Meaning**: A structured value node; optional if you need values beyond raw strings.
-* **When to create**: Only if you want typed values (numbers, sets, structured objects).
-* **Notes**: v1 can omit it and use `state:varValueRaw`.
+* **Meaning**: A state:Calculator_ready represents whether the calculator tool is ready (`true`/`false`) at a given point in the agent 
+    state.  
+* **When to create**: A state:Calculator_ready must be created only when the following explicit anchor is present:
+    @state(
+            id=<id>
+            calculator_ready=<calculator_ready>,                  
+            search_ready=<search_ready>,                     
+            database_connected=<database_connected>,               
+            last_user_input=<last_user_input>,  
+            current_step_index=<current_step_index>,                   
+            intentions_pending=<intentions_pending>,  
+            last_action_intent=<last_action_intent>,      
+            last_tool_call=<last_tool_call>,         
+            last_tool_output=<last_tool_output>,                  
+            termination_flag=<termination_flag>                
+        )
+* **Extraction behavior**: Assign the state:calculator_ready id to the value of <calculator_ready>. 
+    Create a node named `state:Calculator_ready_<calculator_ready>. If no 
+    @state anchor is present, do not create a state:State
 
 ---
 
-## Module `pol:` — Policies and guardrail decisions
+## Module `task:` 
 
-### Class `pol:Policy`
-
-* **Meaning**: A static, predefined constraint template used by the verifier to evaluate action intents and state transitions.
-* **When to create**: Once per policy in your policy catalog (before execution).
-* **Notes**: You can keep policies separate from the run graph or included in it. Including them allows SPARQL queries to refer to policy metadata (e.g., consent-required tools).
-
-### Class `pol:Decision`
-
-* **Meaning**: The verifier/guardrail engine’s intervention outcome applied to a specific ActionIntent at a specific step.
-* **When to create**: Whenever the guardrail engine evaluates an ActionIntent (ideally for each proposed intent).
-* **Notes**: You said minimal explanation is not required, so this can be very lightweight.
-
----
-
-## Module `task:` — Correctness via requirements and satisfaction evidence
 
 ### Class `task:Task`
 
-* **Meaning**: A higher-level unit derived from the user request representing the overall objective to be achieved.
-* **When to create**: When you parse the user request (or the agent explicitly frames the task).
-* **Notes**: Generic container; specialization can support multiple tasks per run.
+* **Meaning**: the user request representing the overall objective to be achieved.
+* **When to create**: A state:Calculator_ready must be created only when the following explicit anchor is present: 
+@task(id=<id_user>, description=<description>)
+* **Extraction behavior**: Assign the task:Task id to the value of <id_user>. If no 
+    @task anchor is present, do not create a task:Task
+    
 
-### Class `task:Requirement`
 
-* **Meaning**: An atomic correctness condition that must be satisfied for the task to be considered completed (e.g., “provide itinerary”, “create file X”, “obtain user consent for Y”, “return answer with citations”).
-* **When to create**: When user request or plan decomposition yields checkable requirements.
-* **Notes**: This is the core of non-heuristic correctness checking.
+
+

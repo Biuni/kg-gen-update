@@ -15,17 +15,25 @@ import logging
 logging.disable(logging.INFO)
 
 class KGGen:
-    """Knowledge graph generator and utility toolkit."""
+    """
+    Knowledge Graph generator and utility toolkit.
+
+    This class orchestrates:
+    - Entity extraction
+    - Relation extraction
+    - Optional deduplication
+    - Graph aggregation and visualization
+    """
     def __init__(
         self,
-        model: str = "openai/gpt-4o",           # name of model to use (e.g. 'gpt-4')
-        max_tokens: int = 16000,                # maximum tokens for model
-        temperature: float = 0.0,               # temperature for model sampling
-        reasoning_effort: str = None,           # "low", "medium", "high"
-        api_key: str = None,                    # API key for model access
-        api_base: str = None,                   # base URL endpoint for making API calls to a language model service
-        retrieval_model: Optional[str] = None,  # name of retrieval model to use
-        disable_cache: bool = False,            # True for disabling caching
+        model: str = "openai/gpt-4o",           
+        max_tokens: int = 16000,                
+        temperature: float = 0.0,               
+        reasoning_effort: str = None,           
+        api_key: str = None,                    
+        api_base: str = None,                   
+        retrieval_model: Optional[str] = None,  
+        disable_cache: bool = False,            
     ):
         """
         Initialize the KGGen instance and configure the language model.
@@ -54,11 +62,8 @@ class KGGen:
         self.temperature = temperature
         self.api_key = api_key
         self.api_base = api_base
-        # Retrieval model is constructed in init_model when provided.
         self.retrieval_model: Optional[SentenceTransformer] = None
-        # Cache toggle for LLM calls (kept for backward compatibility).
         self.disable_cache = disable_cache
-        # Token usage aggregation for LiteLLM calls.
         self._usage_history: list[dict] = []
 
         # Initialize the model with the provided configuration.
@@ -205,7 +210,9 @@ class KGGen:
     def _parse_deduplication_method(
         method: DeduplicateMethod | str | None,
     ) -> DeduplicateMethod | None:
-        """Normalize deduplication method input to DeduplicateMethod enum."""
+        """
+        Normalize deduplication method input to DeduplicateMethod enum.
+        """
         if method is None:
             return None
         if isinstance(method, DeduplicateMethod):
@@ -276,7 +283,7 @@ class KGGen:
                     - set[tuple[str, str, str]]: Extracted relations.
             """
             # Extract entities first to guide relation extraction.
-            entities = get_entities(
+            entities_with_reasoning = get_entities(
                 content,
                 is_conversation,
                 model=self.model,
@@ -287,6 +294,10 @@ class KGGen:
                 else self.temperature,
                 usage_history=self._usage_history,
             )
+
+            # extract only names
+            entities = [name for name, reasoning in entities_with_reasoning]
+
             # Extract relations conditioned on entities.
             relations = get_relations(
                 content,
@@ -300,7 +311,8 @@ class KGGen:
                 else self.temperature,
                 usage_history=self._usage_history,
             )
-            return entities, relations
+
+            return entities_with_reasoning, relations
             
         # Determine input mode (conversation vs. raw text).
         is_conversation = isinstance(input_data, list)
@@ -335,11 +347,13 @@ class KGGen:
                 api_base=api_base or self.api_base,
                 reasoning_effort=reasoning_effort or self.reasoning_effort,
             )
-
+        
+        entities_with_reasoning:List[tuple[str,str]] = []
+        relations:List[tuple[str, str, str]] = []
         # If no chunk size is provided, attempt a single pass.
         if not chunk_size:
             try:
-                entities, relations = _process(processed_input)
+                entities_with_reasoning, relations = _process(processed_input)
             except Exception as e:
                 # If the model reports a context length issue, enable chunking.
                 if "context length" in str(e).lower():
@@ -354,8 +368,8 @@ class KGGen:
         if chunk_size:
             # Split the input into chunks to fit model context limits.
             chunks = chunk_text(processed_input, chunk_size)
-            entities = set()
-            relations = set()
+            entities_with_reasoning = []
+            relations = []
 
             # Process chunks in parallel to speed up extraction.
             with ThreadPoolExecutor() as executor:
@@ -365,15 +379,16 @@ class KGGen:
 
                 for future in as_completed(future_to_chunk):
                     # Merge per-chunk results into global sets.
-                    chunk_entities, chunk_relations = future.result()
-                    entities.update(chunk_entities)
+                    chunk_entities_with_reasoning, chunk_relations = future.result()
+                    entities_with_reasoning.extend(chunk_entities_with_reasoning)
                     relations.update(chunk_relations)
 
         # Build the Graph object from extracted entities and relations.
+        entities_dict = {name: reasoning for name, reasoning in entities_with_reasoning}
         graph = Graph(
-            entities=entities,
+            entities=entities_dict,
             relations=relations,
-            edges={relation[1] for relation in relations},
+            edges={r[1] for r in relations},
         )
 
         deduplication_method = self._parse_deduplication_method(deduplication_method)
@@ -450,39 +465,96 @@ class KGGen:
 
     def aggregate(self, graphs: list[Graph]) -> Graph:
         """
-        Aggregate multiple graphs into a single combined graph.
+        Aggregate multiple Graph instances into a single combined graph.
+
+        Maintains separate entities for each Step (Goal, Intention, Statement, etc.) 
+        even if they have the same type, preventing unintended merging of duplicates.
+
+        Adds the following semantic connections automatically:
+            - trace:nextStep between consecutive Steps
+            - trace:hasStep from Run to all Steps
+            - trace:endsWith from Run to TerminationSignals
 
         Args:
-            - graphs: List of graphs to merge. Entities, relations, edges, and
-                metadata are unioned to remove duplicates.
+            graphs (list[Graph]): List of Graph instances to merge.
 
         Returns:
-            Graph: Aggregated graph containing the union of all elements.
+            Graph: Aggregated graph containing all entities, relations, edges, 
+                and entity metadata.
         """
-        # Initialize empty sets for combined graph.
-        all_entities = set()
-        all_relations = set()
-        all_edges = set()
+        # Initialize containers for the aggregated graph
+        all_entities: dict[str, str] = {}
+        all_relations: set[tuple[str, str, str]] = set()
+        all_edges: set[str] = set()
         all_entity_metadata: dict[str, set[str]] = {}
 
-        # Combine all graphs.
-        for graph in graphs:
-            all_entities.update(graph.entities)
-            all_relations.update(graph.relations)
-            all_edges.update(graph.edges)
-            if graph.entity_metadata:
-                for entity, metadata_set in graph.entity_metadata.items():
-                    if entity in all_entity_metadata:
-                        all_entity_metadata[entity].update(metadata_set)
-                    else:
-                        all_entity_metadata[entity] = metadata_set.copy()
+        steps_ordered: list[str] = []
+        termination_nodes: list[str] = []
+        run_node: str | None = None
+        
+        # Iterate over all graphs to merge their content
+        for g_index, graph in enumerate(graphs):
+            entity_id_map = {}
 
-        # Create and return aggregated graph.
+            # Add entities with unique IDs to avoid collisions across graphs
+            for entity_id, entity_type in graph.entities.items():
+                unique_id = f"{entity_id}_G{g_index}"  # ID univoco
+                all_entities[unique_id] = entity_type
+                entity_id_map[entity_id] = unique_id
+
+                # Copy metadata if available
+                if graph.entity_metadata and entity_id in graph.entity_metadata:
+                    all_entity_metadata[unique_id] = graph.entity_metadata[entity_id].copy()
+
+            # Update relations with unique entity IDs
+            for subj, rel, obj in graph.relations:
+                all_relations.add((entity_id_map.get(subj, subj), rel, entity_id_map.get(obj, obj)))
+                all_edges.add(rel)
+
+            # Collect Step and TerminationSignal nodes using unique IDs
+            steps_in_graph = [entity_id_map[e] for e, t in graph.entities.items() if e.startswith("trace:Step")]
+            steps_ordered.extend(steps_in_graph)
+
+            term_nodes = [entity_id_map[e] for e, t in graph.entities.items() if "TerminationSignal" in t]
+            termination_nodes.extend(term_nodes)
+
+            # Identify Run node (take the first one found)
+            if not run_node:
+                run_candidates = [entity_id_map[e] for e, t in graph.entities.items() if e.startswith("trace:Run")]
+                if run_candidates:
+                    run_node = run_candidates[0]
+
+        # Sort Steps by numeric ID to preserve reasoning order
+        def step_sort_key(step_name: str):
+            try:
+                return int(step_name.split("_")[1])
+            except:
+                return 0
+
+        steps_ordered = sorted(steps_ordered, key=step_sort_key)
+
+        # Connect consecutive steps with trace:nextStep
+        for i in range(len(steps_ordered) - 1):
+            all_relations.add((steps_ordered[i], "trace:nextStep", steps_ordered[i + 1]))
+            all_edges.add("trace:nextStep")
+
+        # Connect all Steps to the Run node
+        if run_node:
+            for step in steps_ordered:
+                all_relations.add((run_node, "trace:hasStep", step))
+                all_edges.add("trace:hasStep")
+
+            # Connect Run node to TerminationSignal nodes
+            for term in termination_nodes:
+                all_relations.add((run_node, "trace:endsWith", term))
+                all_edges.add("trace:endsWith")
+        
+        # Return the aggregated graph
         return Graph(
             entities=all_entities,
             relations=all_relations,
             edges=all_edges,
-            entity_metadata=all_entity_metadata if all_entity_metadata else None,
+            entity_metadata=all_entity_metadata if all_entity_metadata else None
         )
 
     @staticmethod

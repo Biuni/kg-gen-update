@@ -5,6 +5,17 @@ import inflect
 
 
 class DeduplicateList:
+    """
+    Utility class to deduplicate a list of strings using semantic hashing.
+
+    The process includes:
+    - Unicode normalization
+    - Singularization of plural nouns
+    - Semantic similarity-based deduplication
+
+    The class also keeps statistics and mappings between original,
+    normalized, and deduplicated values.
+    """
     inflect_engine: inflect.engine
     original_map: dict[str, str]
     items_map: dict[str, str]
@@ -18,6 +29,12 @@ class DeduplicateList:
     reduction: float
 
     def __init__(self, threshold: float = 0.95):
+        """
+        Initialize the deduplicator.
+
+        Args:
+            threshold: Semantic similarity threshold used by SemHash.
+        """
         self.threshold = threshold
         self.inflect_engine = inflect.engine()
         self.original_map = {}
@@ -27,14 +44,29 @@ class DeduplicateList:
 
     def normalize(self, text: str) -> str:
         """
-        Normalize a text.
+        Normalize a string using Unicode NFKC normalization.
+
+        Args:
+            text: Input string
+
+        Returns:
+            Normalized string
         """
         return unicodedata.normalize("NFKC", text)
 
     def singularize(self, text: str) -> str:
         """
-        Singularize a text.
+        Singularize plural nouns in a string on a token-by-token basis.
+
+        Only tokens that are recognized as plural nouns are converted.
+
+        Args:
+            text: Input string
+
+        Returns:
+            String with plural nouns converted to singular form
         """
+
         # singularize each token when it looks like a plural noun
         tokens = []
         for tok in text.split():
@@ -132,68 +164,79 @@ def run_semhash_deduplication(
     similarity_threshold: float = 0.95,
 ) -> Graph:
     """
-    Deduplicate the graph.
+    Deduplicate entities and edges in a Graph using semantic hashing.
+
+    Args:
+        graph: Input graph
+        similarity_threshold: Semantic similarity threshold
+
+    Returns:
+        A new Graph with deduplicated entities, edges, relations,
+        and merged metadata.
     """
-    # Deduplicate each graph components
+    # Deduplicate entities
     entities_dedup = DeduplicateList(similarity_threshold)
-    entities_dedup.deduplicate(graph.entities)
+    entities_dedup.deduplicate(list(graph.entities.keys()))  # Passa i nomi delle entità
+
+    # Deduplicate edges
     edges_dedup = DeduplicateList(similarity_threshold)
-    edges_dedup.deduplicate(graph.edges)
+    edges_dedup.deduplicate(list(graph.edges))
 
     def _get_relation(relation: list[str]) -> list[str]:
         """
-        Get the transformed relation.
+        Convert a relation to use deduplicated entity and edge names.
+
+        Args:
+            relation: [entity_1, edge, entity_2]
+
+        Returns:
+            Relation with canonical names
         """
-        # Handle case where entity might not be in original_map due to normalization
         first_entity_original = relation[0]
-        if first_entity_original in entities_dedup.original_map:
-            first_entity = entities_dedup.items_map[
-                entities_dedup.original_map[first_entity_original]
-            ]
-        else:
-            # If not found, use the original entity (it might have been normalized differently)
-            first_entity = first_entity_original
-
         second_entity_original = relation[2]
-        if second_entity_original in entities_dedup.original_map:
-            second_entity = entities_dedup.items_map[
-                entities_dedup.original_map[second_entity_original]
-            ]
-        else:
-            # If not found, use the original entity
-            second_entity = second_entity_original
-
         edge_original = relation[1]
-        if edge_original in edges_dedup.original_map:
-            edge = edges_dedup.items_map[edges_dedup.original_map[edge_original]]
-        else:
-            # If not found, use the original edge
-            edge = edge_original
+
+        first_entity = (
+            entities_dedup.items_map[entities_dedup.original_map[first_entity_original]]
+            if first_entity_original in entities_dedup.original_map
+            else first_entity_original
+        )
+
+        second_entity = (
+            entities_dedup.items_map[entities_dedup.original_map[second_entity_original]]
+            if second_entity_original in entities_dedup.original_map
+            else second_entity_original
+        )
+
+        edge = (
+            edges_dedup.items_map[edges_dedup.original_map[edge_original]]
+            if edge_original in edges_dedup.original_map
+            else edge_original
+        )
 
         return [first_entity, edge, second_entity]
 
-    # Deduplicate the graph
-    new_entities = [
-        entities_dedup.items_map[item] for item in entities_dedup.deduplicated
-    ]
-    new_edges = [edges_dedup.items_map[item] for item in edges_dedup.deduplicated]
-    new_relations = [_get_relation(relation) for relation in graph.relations]
+    # Rebuild entities dictionary (name -> reasoning)
+    new_entities = {
+        item: graph.entities[item] for item in entities_dedup.deduplicated if item in graph.entities
+    }
 
-    # Remove duplicate relations
-    new_relations = list(set(tuple(relation) for relation in new_relations))
+    # Rebuild edges and relations
+    new_edges = {edges_dedup.items_map[item] for item in edges_dedup.deduplicated}
 
-    # Update entity_metadata keys to match deduplicated entity names
+    # Pydantic requires relations as set[tuple]
+    new_relations = {tuple(_get_relation(list(r))) for r in graph.relations}  
+
+    # Merge entity metadata after deduplication
     new_entity_metadata: dict[str, set[str]] | None = None
     if graph.entity_metadata:
         new_entity_metadata = {}
         for original_entity, metadata_set in graph.entity_metadata.items():
-            if original_entity in entities_dedup.original_map:
-                deduped_entity = entities_dedup.items_map[
-                    entities_dedup.original_map[original_entity]
-                ]
-            else:
-                deduped_entity = original_entity
-            # Merge metadata sets when entities are deduplicated together
+            deduped_entity = (
+                entities_dedup.items_map[entities_dedup.original_map[original_entity]]
+                if original_entity in entities_dedup.original_map
+                else original_entity
+            )
             if deduped_entity in new_entity_metadata:
                 new_entity_metadata[deduped_entity].update(metadata_set)
             else:
