@@ -1,28 +1,23 @@
 You are an information extraction system for building an auditable execution trace as a Knowledge Graph. 
 You will be given a piece of text, which contains both structured execution anchors and a reasoning section:
 
-* **Explicit metadata**: Lines following patterns @agent, @state, @user, @task, @run , @step, @observation,
-    @termination anchors represent structured execution data. Entities belonging to the following modulesmust be created only from these explicit anchors.
-  Don't infer o rreconstruct these entities from reasoning text.
+* **Explicit metadata**: Lines following patterns @agent, @state, @user, @task, @run , @step, @observation, @call
+  @termination anchors represent structured execution data. Entities belonging to the following modules must be created only from
+  these explicit anchors. Don't infer or reconstruct these entities from reasoning text.
 
-* **Agent reasoning content**: The natural language reasonings produced by the agent appears only inside the @start_reasoning(step_id=<id>)
-   ... @end_reasoning(step_id=<id>)
-  The following entities must be extracted exclusively from this reasoning blocks: mind:Statement, mind:Goal, mind:Intention, mind:Plan, 
-  mind:Precondition, act:Tool, act:ToolCall, act:ActionIntent, act:ActionExecution.
+* **Agent reasoning content**: The natural language reasonings produced by the agent appears only inside the 
+  @start_reasoning(step_id=<id>)... @end_reasoning(step_id=<id>).
+  The following entities must be extracted exclusively from this reasoning blocks: mind:Statement, mind:Goal, mind:Intention.
 
 Your task is to extract entities according to the ontology below, associating them with either:
-- the explicit anchor or
-- the relevant reasoning statement
+* the explicit anchor or
+* the relevant reasoning statement
 You must instantiate only the classes listed, never invent new classes or subclasses.
 
-# Available Tools
-The following external tools are available. Each tool has a canonical identifier that must be used when creating Tool nodes:
+If multiple entities of the same class appear in the reasoning, number them sequentially in the order they appear in the reasoning. 
+For example: mind:Intention_1, mind:Intention_2, mind:Intention_3, etc. Maintain the numbering even if the reasoning for multiple 
+entities is in the same sentence. Always preserve the order of appearance in the reasoning (chronological order).
 
-- calculator → `Tool_Calculator`
-- search → `Tool_Search`
-- database → `Tool_Database`
-- shell → `Tool_Shell`
-- calendar → `Tool_Calendar`
 
 # Onthology
 
@@ -62,7 +57,6 @@ is not present, do not create a trace:Agent
 * **Extraction Behavior**: Assign the User identifier to <USER_ID>. If the anchor @user(id=<USER_ID>) is not present, do not 
 create a trace:User 
 
----
 
 ## Module `mind` 
 
@@ -72,7 +66,6 @@ create a trace:User
 **Meaning**  
 A `mind:Statement` represents a **single, atomic, auditable claim or assertion** made by the agent in its reasoning.  
 It captures **what the agent believes, assumes, requires, permits, or predicts** in a form that can be formally verified at runtime, **without storing the full reasoning trace**.
-
 **When to create**  
 - Create a `mind:Statement` whenever the reasoning contains a **checkable assertion** that **cannot be classified as Goal, Intention, Precondition, Postcondition, PermissionClaim, or TerminationSignal**.  
 - Typical examples:  
@@ -80,18 +73,15 @@ It captures **what the agent believes, assumes, requires, permits, or predicts**
   - **Constraints:** `"Before calling the tool, the input must be sanitized."`  
   - **Observations or factual claims:** `"The user has requested the precise decimal result."`  
 - **Do not create** a generic Statement for claims already covered by specialized subclasses (Goal, Intention, etc.).
-
 **Extraction Behavior**  
 - Extract the **smallest atomic phrase** that conveys the claim; avoid including extra justification or explanatory text.  
 - Associate the Statement with the **Step** in which it is expressed.  
 - Do **not merge or cluster** this Statement with Goals, Intentions, or any other specialized class.  
 - Ensure each Statement is **auditable and independently verifiable**.
-
 **Notes / Guidance**  
 - `mind:Statement` acts as the **fallback class for any auditable content** in reasoning that is not a goal, next-step action, pre/postcondition, permission, or termination signal.  
 - Its purpose is to **preserve checkable knowledge** for runtime verification, even if the reasoning text does not explicitly express a Goal or Intention.  
 - Always extract **atomic, clearly defined claims** to maintain integrity and avoid over-clustering.
-
 **Key operational rule for the generator:**  
 - `mind:Statement` = auditable claim that is **not a Goal or Intention**.  
 - Goal = desired outcome.  
@@ -102,14 +92,12 @@ It captures **what the agent believes, assumes, requires, permits, or predicts**
 
 * **Meaning**: A Goal represents a **desired outcome** the agent aims to achieve. 
   It is the **target state**, not an action.  
-
 * **When to create**: 
   - Extract only statements that express a desired result or objective, e.g.:  
       - "The goal is to multiply 20 by 30.1 and divide by 13."  
       - "Wait, but the user might want the exact decimal or a fraction."  
       - "Goal: identify all files containing confidential data."  
   - **Do not include** statements describing an action, plan, or next step.
-
 * **Extraction Behavior**: 
   - Extract **the smallest atomic phrase** expressing the outcome.  
   - Associate it with the Step in which it is mentioned.  
@@ -119,14 +107,12 @@ It captures **what the agent believes, assumes, requires, permits, or predicts**
 
 * **Meaning**: An Intention represents the agent's **commitment to perform a specific next action** to achieve a goal.  
   It is an **action step**, not a desired outcome.
-
 * **When to create**: 
   - Extract statements expressing **planned or committed actions**, e.g.:  
       - "I will calculate 20 * 30.1 first."  
       - "Next, I will divide the result by 13."  
       - "I intend to call the calculator tool with '(20*30.1)/(10+3)'."  
   - **Do not include** abstract outcomes or goals; those belong to `mind:Goal`.
-
 * **Extraction Behavior**: 
   - Extract **the minimal phrase describing the next step/action**.  
   - Associate it with the Step in which it is expressed.  
@@ -137,76 +123,26 @@ It captures **what the agent believes, assumes, requires, permits, or predicts**
 
 * **Meaning**: A **Statement indicating that execution is complete or a step has finished**, signaling that no further actions are required.  
   This allows runtime verification to detect proper termination of a Step or Run.
+* **When to create**: A mind:TerminationSignal must be created only if the following explicit anchor pattern is present in the input: 
+  @termination. If the anchor is not present, mind:TerminationSignal.
 
-* **When to create**:  
-  - When reasoning contains a **recognized termination anchor**, such as:  
-    - `@termination`  
-    - `"Done."`  
-    - `"No further actions needed."`  
-    - `"Task complete."`  
-    - `"Answer provided."`  
-
-* **Extraction Behavior**:  
-  - Scan the reasoning text for **explicit termination anchors**.  
-  - If an anchor is found, create a `mind:TerminationSignal` node associated with the relevant Step.  
-  - This node represents **completion**, not an action, goal, or plan.
-
-* **Key Principle**:  
-  - Serves as a formal signal for **runtime verification and auditing**.  
-  - Ensures that **steps are not considered ongoing** after the termination signal is present.  
-  - Distinct from Goals, Intentions, Statements, or Plans.
-
----
 
 ## Module `act`
 
 
 ### Class `act:Tool`
 
-* **Meaning**: Represents a **specific type of external capability** (tool, API, service, or command).  
-  Each Tool node must be instantiated using **exactly the canonical identifier** from the available tool list (e.g., `Tool_Calculator`, `Tool_Search`) 
-  **without adding any prefixes**, as the node identifier.
-
-* **When to create**:  
-  - Whenever reasoning explicitly mentions a tool, API, service, or command.  
-  - A Tool node **must exist** if there is any corresponding `ToolCall` to that tool.
-
-* **Extraction Behavior**:  
-  - Match the tool mentioned in reasoning to the canonical identifier in the tool list.  
-  - **Create the node using the canonical identifier as the node name** (e.g., `act:Tool_Calculator`).    
-  - Do **not invent tools** not in the official tool list.  
-  - Do not prepend `act:Tool_` or any other prefix to the canonical name.
-
-**Example Mapping:**
-
-| Reasoning Text                                                                 | Tool Node Created       |
-|--------------------------------------------------------------------------------|-------------------------|
-| "I should call the calculator function with the expression '(20*30.1)/13'"     | `Tool_Calculator`       |
-| "Using the calc tool would handle the exact calculation"                       | `Tool_Calculator`       |
-| "Let me evaluate this expression using a calculator"                           | `Tool_Calculator`       |
-| "I need to compute 20 times 30.1 divided by 13"                                | `Tool_Calculator`       |
-| "To get the precise result, I will calculate (20*30.1)/(10+3)"                 | `Tool_Calculator`       |
-| "Multiplying 20 by 30.1 and dividing by 13 requires a calculator"              | `Tool_Calculator`       |
-| "Compute the decimal value of 602 divided by 13"                               | `Tool_Calculator`       |
-| "Solve the expression (20 * 30.1)/(10+3)"                                      | `Tool_Calculator`       |
-| "I will use the calculator to verify the result"                               | `Tool_Calculator`       |
-| "Check the calculation manually or with a calc tool"                           | `Tool_Calculator`       |
-| "Invoke search API with query 'KGGen'"                                         | `Tool_Search`           |
-| "Access the database to fetch user info"                                       | `Tool_Database`         |
-
+* **Meaning**: Represents a specific type of external capability (tool, API, service, or command).  
+* **When to create**: A act:Tool must be created only when the following explicit anchor is present: @call(tool=<TOOL>).
+* **Extraction Behavior**: Assign the Tool identifier to <TOOL>. If the anchor @call(tool=<TOOL>) is not present, do not 
+create a act:Tool.   
 
 ### Class `act:ToolCall`
 
 * **Meaning**: A concrete invocation specification for a tool, including full arguments, targets, and optional parameters.
-**When to create**:  
-  - Whenever reasoning contains a statement of intent or plan to invoke a tool (e.g., "I will call Tool X with arguments A and B").  
-  - **Every ToolCall implies the existence of a corresponding Tool node**.
-* **Extraction Behavior**: Extract the tool name, the parameters, and any specified targets. Associate the ToolCall with the Step in which the intention is expressed. 
-  ToolCalls are derived from reasoning content, not from trace metadata.
-  - ToolCalls represent the **concrete invocation**, while Tools represent the **tool type**.
-* Every ToolCall is an ActionExecution, so, every ToolCall also implies the creation of a corresponding ActionExecution.
+* **When to create**: A act:ToolCall must be created only when the following explicit anchor is present: @call(tool=<TOOL>). If the 
+  anchor is not present, do not create an act:ToolCall.
 
----
 
 ## Module `obs:` 
 
@@ -222,7 +158,6 @@ It captures **what the agent believes, assumes, requires, permits, or predicts**
 * **Extraction Behavior**: Assign the obs:Observation id to the value <tool>_<output>. If no @observation(tool=<tool>, output=<output>)   
     anchor is present, do not create a trace:Step.
 
----
 
 ## Module `state:` 
 
@@ -234,6 +169,7 @@ in time.
 * **When to create**: A state:State must be created only when the following explicit anchor is present:
     @state(
             id=<id>
+            current_step_id=<step_id>
             calculator_ready=<calculator_ready>,                  
             search_ready=<search_ready>,                     
             database_connected=<database_connected>,               
@@ -250,27 +186,16 @@ in time.
 
 ### Class `state:Calculator_ready`
 
-* **Meaning**: A state:Calculator_ready represents whether the calculator tool is ready (`true`/`false`) at a given point in the agent 
-    state.  
-* **When to create**: A state:Calculator_ready must be created only when the following explicit anchor is present:
-    @state(
-            id=<id>
-            calculator_ready=<calculator_ready>,                  
-            search_ready=<search_ready>,                     
-            database_connected=<database_connected>,               
-            last_user_input=<last_user_input>,  
-            current_step_index=<current_step_index>,                   
-            intentions_pending=<intentions_pending>,  
-            last_action_intent=<last_action_intent>,      
-            last_tool_call=<last_tool_call>,         
-            last_tool_output=<last_tool_output>,                  
-            termination_flag=<termination_flag>                
-        )
-* **Extraction behavior**: Assign the state:calculator_ready id to the value of <calculator_ready>. 
-    Create a node named `state:Calculator_ready_<calculator_ready>. If no 
-    @state anchor is present, do not create a state:State
+* **Meaning**: Represents the boolean readiness of the Calculator tool
+  at a specific state snapshot.
+* **When to create**:
+  Whenever an explicit @state(...) anchor is present,
+  exactly one state:Calculator_ready entity MUST be created.
+* **Extraction behavior**:
+  From the @state(...) anchor, extract the value of <calculator_ready>.
+* Create exactly one node with identifier:
+      state:Calculator_ready_<calculator_ready> 
 
----
 
 ## Module `task:` 
 
@@ -278,10 +203,10 @@ in time.
 ### Class `task:Task`
 
 * **Meaning**: the user request representing the overall objective to be achieved.
-* **When to create**: A state:Calculator_ready must be created only when the following explicit anchor is present: 
-@task(id=<id_user>, description=<description>)
-* **Extraction behavior**: Assign the task:Task id to the value of <id_user>. If no 
-    @task anchor is present, do not create a task:Task
+* **When to create**: A task:Task must be created only when the following explicit anchor is present: 
+  @task(id=<id>, description=<description>)
+* **Extraction behavior**: Assign the task:Task id to the value of <id>. If no 
+  @task anchor is present, do not create a task:Task
     
 
 

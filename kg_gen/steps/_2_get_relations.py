@@ -26,51 +26,33 @@ def parse_relations_response(
         List[Tuple[str, str, str]]: List of (subject, predicate, object)
         tuples with valid entities only.
     """
-    # Convert entity list to a set for fast membership checks
-    entities_set = set(entities)
 
-    # Attempt strict validation with Pydantic if a model is provided
-    if response_model is not None:
-        try:
-            parsed = response_model.model_validate_json(raw_json)
-            return [(r.subject, r.predicate, r.object) for r in parsed.relations]
-        except ValidationError:
-            # Fall through to JSON parsing.
-            pass
-
-    # Fallback: parse as raw JSON and filter.
-    try:
-        data = json.loads(raw_json)
-    except json.JSONDecodeError:
-        return []
-
-    # Handle both {"relations": [...]} and direct list formats
-    items = data.get("relations", data) if isinstance(data, dict) else data
-
-    if not isinstance(items, list):
-        return []
+    # Strict mode requires a response model
+    if response_model is None:
+        raise ValueError("Strict parsing requires a response_model.")
     
-    # Filter and validate each relation item
-    relations = []
-    for item in items:
-        if not isinstance(item, dict):
+    try:
+        parsed = response_model.model_validate_json(raw_json)
+    except ValidationError as e:
+        # Hard fail: do NOT fellback
+        print("Relation validation failed:", e)
+        return []
+
+    entities_set = set(entities)
+    valid_relations: List[Tuple[str, str, str]] = []
+
+    for r in parsed.relations:
+        if r.subject not in entities_set:
+            print(f"Skipping relation: subject not found -> {r.subject}")
             continue
 
-        subject = item.get("subject")
-        predicate = item.get("predicate")
-        obj = item.get("object")
-
-        # Skip if missing required fields.
-        if not all([subject, predicate, obj]):
+        if r.object not in entities_set:
+            print(f"Skipping relation: object not found -> {r.object}")
             continue
 
-        # Skip if subject or object not in valid entities.
-        if subject not in entities_set or obj not in entities_set:
-            continue
+        valid_relations.append((r.subject, r.predicate, r.object))
 
-        relations.append((subject, predicate, obj))
-
-    return relations
+    return valid_relations
 
 
 def _load_relations_prompt() -> str:
@@ -140,6 +122,7 @@ def _get_relations_litellm(
     Returns:
         List[Tuple[str, str, str]]: Extracted (subject, predicate, object) triples.
     """
+
     # Return empty if no entities are provided
     if not entities:
         return []

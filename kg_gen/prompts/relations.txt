@@ -16,9 +16,12 @@ Don't violate the following constraints:
 
 The following relations must be created when applicable, they are mandatory:
 
-- Every Step must belong to exactly one Run
 - Every Statement must be asserted in exactly one Step
-- Every ActionIntent must be proposed in a Step
+- Every State must be owned by exactly one Agent
+- Every State must belong to at least one step
+- Every Task must be requestedBy exactly one User
+- Every Task must be handledByRun exactly one Run
+- Every State must expose all its declared variables via state:hasVariable
 
 
 # The allowed relation properties are:
@@ -27,44 +30,17 @@ The following relations must be created when applicable, they are mandatory:
 ## Module `trace` 
 
 
-### Property `trace:hasStep (Run → Step)`
-
-- **Meaning**: Indicates that a Run contains a Step. Every execution graph must have a current Run, and every Step produced by the 
-agent belongs to exactly one Run. This property is mandatory for every Step and is the primary way to connect Steps to their enclosing 
-Run. A Run is the top-level container for a sequence of Steps. Steps cannot exist independently, they must always be linked to a Run.
-Each Run can have one or more Steps.
-- **Domain**: trace:Run 
-- **Range**: trace:Step - a reasoning step that occurs within the Run
-- **Direction**: Always from Run to Step. 
-- **When to create**: Immediately when a Step is created, assign it to the current Run.
-
 ### Property `trace:performedBy (Run → Agent)`
 
 - **Meaning**: Indicates which Agent produced or executed the Run
 - **Domain**: trace:Run 
 - **Range**: trace:Agent  
 - **Direction**: from trace:Run to trace:Agent  
-- **When to create**: Always create this relation 
+- **When to create**: Always create this relation  
 
-### Property trace:nextStep (Step → Step)`
-
-- **Meaning**: Indicates the immediate next Step in the sequence of reasoning within a Run.  
-  This establishes the **temporal and logical ordering** of Steps in the execution trace.
-- **Domain**: `trace:Step_i`  
-- **Range**: `trace:Step_j — the Step that immediately follows in sequence.
-- **Direction**: From the Step_i → next Step_j if i < j  
-- **Creation rule / When to create**:  
-  1. Identify all Steps within a Run (`@trace.run(id=<RUN_ID>)`).  
-  2. Sort Steps by `index` (or by incremental `id` if `index` is unavailable).  
-  3. For each Step_i in the sequence, create:  
-     ```
-     trace:nextStep Step_i → Step_{i+1}
-     ```  
-  4. The last Step in the Run does not have a `nextStep`.  
-
----
 
 ## Module `mind` 
+
 
 ### Property `mind:assertedIn (Statement → Step)`
 
@@ -73,7 +49,7 @@ Each Run can have one or more Steps.
 - **Domain**: mind:Statement - the auditable assertion the auditable assertion extracted from reasoning
 - **Range**: trace:Step - the step on which the assertion was generated. The Step node whose id matches the step_id in the reasoning block.
 - **Direction**: From mind:Statement to trace:Step 
-- **When to Create**: Always for every Statement extracted
+- **When to Create**: Always for every mind:Statement 
 
 ### Property `mind:motivates (Goal → Intention)`
 
@@ -85,12 +61,13 @@ Each Run can have one or more Steps.
 
 ### Property `mind:expressedIn (Intention → Step)`
 
-- **Meaning**: Anchors an Intention to the Step in which it was formulated or stated. Only the Step corresponding to the reasoning block 
-  from which the intention was extracted should be linked. 
-- **Domain**: mind:Intention  
-- **Range**: trace:Step  
-- **Direction**: from mind:Intention to trace:Step  
-- **When to create**: Always create this relation for every Intention.
+- **Meaning**: Anchors an Intention to the Step in which it was formulated or stated. Only the Step corresponding to the reasoning block from which the intention was extracted should be linked.
+- **Domain**: `mind:Intention`
+- **Range**: `trace:Step`
+- **Direction**: from `mind:Intention` to `trace:Step`
+- **When to create**: Always create this relation for **every Intention entity**.
+  - If a Step contains multiple intentions (e.g., `intention_1`, `intention_2`, …), each intention must have its own `mind:expressedIn` edge pointing to the trace:Step.
+  - This ensures that all intentions are properly anchored to the reasoning step they originate from, maintaining accurate traceability in the knowledge graph.
 
 ### Property `mind:terminates (TerminationSignal → Run)`
 
@@ -100,26 +77,47 @@ Each Run can have one or more Steps.
 - **Direction**: from mind:TerminationSignal to trace:Run  
 - **When to create**: Always create this relation for every TerminationSignal.
 
-### Property mind:goalInStep (Goal → Step)
+### Property `mind:goalInStep (Goal → Step)`
 
-- **Meaning**: Links a Goal directly to the Step in which it is relevant or considered.
-- **Domain**: mind:Goal
-- **Range**: trace:Step
-- **Direction**: from mind:Goal to trace:Step
-- **When to create**: Always create this relation when a Goal motivates an Intention in a specific Step.
+- **Meaning**: Links a Goal directly to the Step in which the Goal is expressed or considered relevant.  
+- **Domain**: `mind:Goal`  
+- **Range**: `trace:Step`  
+- **Direction**: from mind:Goal → trace:Step  
+- **When to create**:  
+  1. Whenever a Goal is extracted from a reasoning block, i.e., from `@start_reasoning(step_id=<STEP_ID>) ... @end_reasoning(step_id=<STEP_ID>)`.  
+  2. The corresponding Step is the one whose `@step(id=<STEP_ID>, ...)` matches the `step_id` of the reasoning block from which the Goal was extracted.  
+  3. This relation should be created regardless of whether any Intention exists in the reasoning.  
 
----
+### Property `mind:commitsToToolCall`
+
+- **Domain**: `mind:Intention`
+- **Range**: `act:ToolCall`
+- **Meaning**: Indicates that an Intention node explicitly commits to the execution
+  of a specific ToolCall.
+- **When to create**:
+  Create this relation if:
+    1. A `mind:Intention` is extracted from a reasoning step, AND
+    2. The same reasoning step contains the explicit anchor `@call(tool=<TOOL>)`,
+       generating an `act:ToolCall`.
+- In this case, link:
+      mind:Intention  -- mind:commitsToToolCall -->  act:ToolCall
+- **Do NOT create**:
+  - If the Intention mentions a tool conceptually but no `@call` anchor is present.
+  - If a ToolCall exists without a corresponding Intention in the same reasoning step.
+
 
 ## Module `act`
 
 
 ### Property `act:usesTool (ToolCall → Tool)`
 
-- **Meaning**: This relation specifies **which tool type** is being used by a given ToolCall.
-- **Domain**: act:ToolCall  
-- **Range**: act:Tool  
-- **Direction**: from the act:ToolCall to the act:Tool  
-- **When to create**: Always for every ToolCall.
+- **Meaning**: Identifies the type of tool (`Tool`) actually used by a specific invocation (`ToolCall`). This 
+  relation indicates **that each ToolCall is associated with a concrete Tool**, independently of any Intention or reasoning context.  
+- **Domain**: `act:ToolCall`  
+- **Range**: `act:Tool`  
+- **Direction**: from the `ToolCall` node to the `Tool` node  
+- **When to create**: For **every ToolCall present in the graph**, automatically create this relation to the corresponding Tool. 
+  It does **not require a linked Intention**; the relation is deterministic: if the ToolCall exists, `act:usesTool` exists.  
 
 ### Property act:usedInStep (ToolCall → Step)
 
@@ -129,8 +127,6 @@ Each Run can have one or more Steps.
 - **Direction**: from act:Tool to trace:Step
 - **When to create**: Create this whenever a ToolCall using this Tool occurs in a Step.
 
-
----
 
 ## Module `obs`
 
@@ -144,7 +140,6 @@ and can access the observation produced by a tool execution.
 - **Direction**: from the observation to the step in which it became available
 - **When to create**: Always create this relation for every Observation. 
 
-
 ### Property `obs:results (act:ToolCall → obs:Observation)`
 
 - **Meaning**: This relation links a ToolCall to the Observation(s) produced
@@ -155,7 +150,6 @@ and can access the observation produced by a tool execution.
 - **When to create**: Create this property whenever a tool call returns output,
   regardless of whether the output indicates success, failure, or partial results.
 
----
 
 ## Module `state` 
   
@@ -182,9 +176,11 @@ and can access the observation produced by a tool execution.
 - **Domain**: state:State  
 - **Range**: trace:Step  
 - **Direction**: from state:State to trace:Step  
-- **When to create**: Create this relation whenever a State is emitted or updated during a Step.
+- **When to create**: For every State entity:
+    1. Read current_step_id
+    2. Map to Step with matching id
+    3. Create: state:State_<id> -- state:activeIn --> trace:Step_<STEP_ID>
 
----
 
 ## Module `task`
 
@@ -205,6 +201,6 @@ and can access the observation produced by a tool execution.
 - **Direction**: from task:Task to trace:Run
 - **When to create**: Create this relation whenever a Run is solving or processing a Task.  
 
-# The final instructions are:
+# The final instruction is:
 
 - Output only relationship triples (not explanations, not summaries, not free text)

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Union, List, Dict, Optional
 from sentence_transformers import SentenceTransformer
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -296,7 +297,7 @@ class KGGen:
             )
 
             # extract only names
-            entities = [name for name, reasoning in entities_with_reasoning]
+            entities = [name for name, _ in entities_with_reasoning]
 
             # Extract relations conditioned on entities.
             relations = get_relations(
@@ -349,11 +350,13 @@ class KGGen:
             )
         
         entities_with_reasoning:List[tuple[str,str]] = []
-        relations:List[tuple[str, str, str]] = []
+        relations: set[tuple[str, str, str]] = set()
+
         # If no chunk size is provided, attempt a single pass.
         if not chunk_size:
             try:
-                entities_with_reasoning, relations = _process(processed_input)
+                entities_with_reasoning, extracted_relations = _process(processed_input)
+                relations = set(extracted_relations)
             except Exception as e:
                 # If the model reports a context length issue, enable chunking.
                 if "context length" in str(e).lower():
@@ -369,7 +372,7 @@ class KGGen:
             # Split the input into chunks to fit model context limits.
             chunks = chunk_text(processed_input, chunk_size)
             entities_with_reasoning = []
-            relations = []
+            relations = set()
 
             # Process chunks in parallel to speed up extraction.
             with ThreadPoolExecutor() as executor:
@@ -379,24 +382,25 @@ class KGGen:
 
                 for future in as_completed(future_to_chunk):
                     # Merge per-chunk results into global sets.
-                    chunk_entities_with_reasoning, chunk_relations = future.result()
-                    entities_with_reasoning.extend(chunk_entities_with_reasoning)
+                    chunk_entities, chunk_relations = future.result()
+                    entities_with_reasoning.extend(chunk_entities)
                     relations.update(chunk_relations)
 
         # Build the Graph object from extracted entities and relations.
         entities_dict = {name: reasoning for name, reasoning in entities_with_reasoning}
+        valid_entity_names = set(entities_dict.keys())
+
+        relations = {
+            (s, p, o)
+            for (s, p, o) in relations
+            if s in valid_entity_names and o in valid_entity_names
+        }
+
         graph = Graph(
             entities=entities_dict,
             relations=relations,
             edges={r[1] for r in relations},
         )
-
-        deduplication_method = self._parse_deduplication_method(deduplication_method)
-        if deduplication_method:
-            # Deduplicate the graph if a method is provided.
-            graph = self.deduplicate(
-                graph, method=deduplication_method, context=context
-            )
 
         if output_folder:
             # Persist output if a folder is specified.
@@ -508,28 +512,44 @@ class KGGen:
 
             # Update relations with unique entity IDs
             for subj, rel, obj in graph.relations:
-                all_relations.add((entity_id_map.get(subj, subj), rel, entity_id_map.get(obj, obj)))
-                all_edges.add(rel)
+                if subj in entity_id_map and obj in entity_id_map:
+                    new_rel = (
+                        entity_id_map[subj],
+                        rel,
+                        entity_id_map[obj],
+                    )
+                    all_relations.add(new_rel)
+                    all_edges.add(rel)
 
             # Collect Step and TerminationSignal nodes using unique IDs
-            steps_in_graph = [entity_id_map[e] for e, t in graph.entities.items() if e.startswith("trace:Step")]
+            steps_in_graph = [
+                entity_id_map[e]
+                for e in graph.entities
+                if e.startswith("trace:Step")
+            ]
             steps_ordered.extend(steps_in_graph)
 
-            term_nodes = [entity_id_map[e] for e, t in graph.entities.items() if "TerminationSignal" in t]
+            term_nodes = [
+                entity_id_map[e]
+                for e in graph.entities
+                if e.startswith("mind:TerminationSignal")
+            ]
             termination_nodes.extend(term_nodes)
 
             # Identify Run node (take the first one found)
             if not run_node:
-                run_candidates = [entity_id_map[e] for e, t in graph.entities.items() if e.startswith("trace:Run")]
+                run_candidates = [
+                    entity_id_map[e]
+                    for e in graph.entities
+                    if e.startswith("trace:Run")
+                ]
                 if run_candidates:
                     run_node = run_candidates[0]
 
         # Sort Steps by numeric ID to preserve reasoning order
         def step_sort_key(step_name: str):
-            try:
-                return int(step_name.split("_")[1])
-            except:
-                return 0
+            match = re.search(r"S(\d+)", step_name)
+            return int(match.group(1)) if match else 0
 
         steps_ordered = sorted(steps_ordered, key=step_sort_key)
 
@@ -624,238 +644,4 @@ class KGGen:
             "total_tokens": total_tokens,
         }
 
-    # ====== Retrieval Methods ======
-
-    # def _parse_embedding_model(
-    #     self, model: Optional[SentenceTransformer] = None
-    # ) -> Optional[SentenceTransformer]:
-    #     """
-    #     Resolve the embedding model to use for retrieval operations.
-
-    #     Args:
-    #         - model: Optional SentenceTransformer instance. If None, uses
-    #             `self.retrieval_model`.
-
-    #     Returns:
-    #         SentenceTransformer: Ready-to-use embedding model.
-
-    #     Raises:
-    #         ValueError: If no embedding model is available.
-    #     """
-    #     # Prefer the provided model, otherwise fall back to instance config.
-    #     if model is None:
-    #         model = self.retrieval_model
-    #     if model is None:
-    #         raise ValueError("No retrieval model provided")
-    #     return model
-
-    # @staticmethod
-    # def to_nx(graph: Graph) -> nx.DiGraph:
-    #     """
-    #     Convert a Graph into a NetworkX directed graph.
-
-    #     Args:
-    #         graph: Input Graph to convert.
-
-    #     Returns:
-    #         nx.DiGraph: Directed graph with nodes = entities and edges = relations.
-    #     """
-    #     # Initialize an empty directed graph.
-    #     G = nx.DiGraph()
-    #     # Add all entities as nodes.
-    #     for entity in graph.entities:
-    #         G.add_node(entity)
-
-    #     # Add directed edges with relation labels.
-    #     for relation in graph.relations:
-    #         source, rel, target = relation
-    #         G.add_edge(source, target, relation=rel)
-    #     return G
-
-    # def generate_embeddings(
-    #     self,
-    #     graph: Union[Graph, nx.DiGraph],
-    #     model: Optional[SentenceTransformer] = None,
-    # ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
-    #     """
-    #     Generate embeddings for nodes and relations of a graph.
-
-    #     Args:
-    #         graph: Graph or nx.DiGraph. If Graph, it is converted to NetworkX.
-    #         model: Embedding model to use. If None, uses instance retrieval model.
-
-    #     Returns:
-    #         tuple:
-    #             - dict[str, np.ndarray]: Node -> embedding map.
-    #             - dict[str, np.ndarray]: Relation -> embedding map.
-    #     """
-    #     # Resolve the embedding model.
-    #     model = self._parse_embedding_model(model)
-    #     if isinstance(graph, Graph):
-    #         # Convert to NetworkX to simplify iteration.
-    #         graph = self.to_nx(graph)
-
-    #     # Encode each node string into an embedding vector.
-    #     node_embeddings = {node: model.encode(node).tolist() for node in graph.nodes}
-    #     relation_embeddings = {
-    #         rel: model.encode(rel).tolist()
-    #         # TODO: this is triggering index out of range error
-    #         for rel in set(edge[2]["relation"] for edge in graph.edges(data=True))
-    #     }
-    #     return node_embeddings, relation_embeddings
-
-    # def retrieve(
-    #     self,
-    #     query: str,
-    #     node_embeddings: dict[str, np.ndarray],
-    #     graph: nx.DiGraph,
-    #     model: Optional[SentenceTransformer] = None,
-    #     k: int = 8,
-    #     verbose: bool = False,
-    # ) -> tuple[list[tuple[str, float]], set[str], str]:
-    #     """
-    #     Retrieve top-k relevant nodes and build a textual context for a query.
-
-    #     Args:
-    #         query: Query text.
-    #         node_embeddings: Precomputed node -> embedding map.
-    #         graph: NetworkX graph used to reconstruct local context.
-    #         model: Embedding model for the query. If None, uses instance retrieval model.
-    #         k: Number of top similar nodes to return.
-    #         verbose: If True, prints per-node context and the final combined context.
-
-    #     Returns:
-    #         tuple:
-    #             - list[tuple[str, float]]: Top-k nodes with similarity scores.
-    #             - set[str]: Context sentences extracted from the graph.
-    #             - str: Combined context string (space-joined sentences).
-    #     """
-    #     # Resolve the embedding model for the query.
-    #     model = self._parse_embedding_model(model)
-    #     # Find the most relevant nodes by cosine similarity.
-    #     top_nodes = self.retrieve_relevant_nodes(query, node_embeddings, model, k)
-    #     context = set()
-    #     for node, _ in top_nodes:
-    #         # Collect context around each top node.
-    #         node_context = self.retrieve_context(node, graph)
-    #         if verbose:
-    #             print(f"Context for node {node}: {node_context}")
-    #         context.update(node_context)
-    #     # Join context sentences into a single text block.
-    #     context_text = " ".join(context)
-    #     if verbose:
-    #         print(f"Combined context: '{context_text}'\n---")
-    #     return top_nodes, context, context_text
-
-    # @staticmethod
-    # def retrieve_relevant_nodes(
-    #     query: str,
-    #     node_embeddings: dict[str, np.ndarray],
-    #     model: SentenceTransformer,
-    #     k: int = 8,
-    # ) -> list[tuple[str, float]]:
-    #     """
-    #     Compute similarity between the query and all nodes and return top-k.
-
-    #     Args:
-    #         query: Query text.
-    #         node_embeddings: Node -> embedding map.
-    #         model: Embedding model used to encode the query.
-    #         k: Maximum number of nodes to return.
-
-    #     Returns:
-    #         list[tuple[str, float]]: Sorted list of (node, similarity) in
-    #             descending similarity order.
-    #     """
-    #     # Encode the query once for efficiency.
-    #     query_embedding = model.encode(query).reshape(1, -1)
-    #     similarities = []
-    #     for node, embed in node_embeddings.items():
-    #         # Compute cosine similarity with each node embedding.
-    #         target_embedding = np.array(embed).reshape(1, -1)
-    #         similarity = cosine_similarity(query_embedding, target_embedding)[0][0]
-    #         similarities.append((node, similarity))
-    #     # Sort by similarity and return top-k.
-    #     similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
-    #     return similarities[:k]
-
-    # @staticmethod
-    # def retrieve_context(node: str, graph: nx.DiGraph, depth: int = 2) -> list[str]:
-    #     """
-    #     Extract local context for a node by exploring incoming and outgoing neighbors.
-
-    #     Args:
-    #         node: Starting node.
-    #         graph: NetworkX graph to explore.
-    #         depth: Maximum traversal depth (>= 1).
-
-    #     Returns:
-    #         list[str]: Sentences describing relations involving the node and
-    #             its neighbors up to the specified depth.
-    #     """
-    #     # Use a set to avoid duplicate context sentences.
-    #     context = set()
-
-    #     def explore_neighbors(current_node, current_depth):
-    #         """
-    #         Recursively explore incoming and outgoing neighbors of a node.
-
-    #         Args:
-    #             current_node: Node currently being expanded.
-    #             current_depth: Current recursion depth.
-
-    #         Returns:
-    #             None. Adds descriptive sentences to `context`.
-    #         """
-    #         # Stop recursion if depth limit is exceeded.
-    #         if current_depth > depth:
-    #             return
-    #         # Outgoing edges.
-    #         for neighbor in graph.neighbors(current_node):
-    #             rel = graph[current_node][neighbor]["relation"]
-    #             context.add(f"{current_node} {rel} {neighbor}.")
-    #             explore_neighbors(neighbor, current_depth + 1)
-    #         # Incoming edges.
-    #         for neighbor in graph.predecessors(current_node):
-    #             rel = graph[neighbor][current_node]["relation"]
-    #             context.add(f"{neighbor} {rel} {current_node}.")
-    #             explore_neighbors(neighbor, current_depth + 1)
-
-    #     # Start traversal from the given node.
-    #     explore_neighbors(node, 1)
-    #     return list(context)
-
-    # @staticmethod
-    # def export_graph(graph: Graph, output_path: str):
-    #     """
-    #     Export a Graph to JSON on disk.
-
-    #     Args:
-    #         graph: Graph to export.
-    #         output_path: Full path of the output JSON file.
-
-    #     Returns:
-    #         None.
-
-    #     Raises:
-    #         OSError: If the directory cannot be created or the file cannot be written.
-    #     """
-    #     # Ensure the output directory exists.
-    #     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    #     # Build a serializable dictionary payload.
-    #     graph_dict = {
-    #         "entities": list(graph.entities),
-    #         "relations": list(graph.relations),
-    #         "edges": list(graph.edges),
-    #         "entity_clusters": {k: list(v) for k, v in graph.entity_clusters.items()}
-    #         if graph.entity_clusters
-    #         else None,
-    #         "edge_clusters": {k: list(v) for k, v in graph.edge_clusters.items()}
-    #         if graph.edge_clusters
-    #         else None,
-    #         "entity_metadata": graph.entity_metadata,
-    #     }
-
-    #     # Write JSON to disk.
-    #     with open(output_path, "w") as f:
-    #         json.dump(graph_dict, f, indent=2)
+   
