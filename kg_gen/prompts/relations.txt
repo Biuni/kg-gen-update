@@ -69,12 +69,12 @@ The following relations must be created when applicable, they are mandatory:
   - If a Step contains multiple intentions (e.g., `intention_1`, `intention_2`, …), each intention must have its own `mind:expressedIn` edge pointing to the trace:Step.
   - This ensures that all intentions are properly anchored to the reasoning step they originate from, maintaining accurate traceability in the knowledge graph.
 
-### Property `mind:terminates (TerminationSignal → Run)`
+### Property `mind:terminates (TerminationSignal → Step)`
 
 - **Meaning**: Indicates the Step in which the agent explicitly signals termination.
 - **Domain**: mind:TerminationSignal  
-- **Range**: trace:Run  
-- **Direction**: from mind:TerminationSignal to trace:Run  
+- **Range**: trace:Step  
+- **Direction**: from mind:TerminationSignal to trace:Step  
 - **When to create**: Always create this relation for every TerminationSignal.
 
 ### Property `mind:goalInStep (Goal → Step)`
