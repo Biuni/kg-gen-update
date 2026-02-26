@@ -79,14 +79,14 @@ def _create_relations_model(entities: List[str]):
         tuple: (RelationItem, RelationsResponse) Pydantic model classes.
     """
     # Convert entities list into a Literal type for strict validation
-    EntityLiteral = Literal[tuple(entities)]  # type: ignore
+    # EntityLiteral = Literal[tuple(entities)]  # type: ignore
 
     # Create RelationItem with constrained subject/object.
     RelationItem = create_model(
         "RelationItem",
-        subject=(EntityLiteral, ...),
+        subject=(str, ...),
         predicate=(str, ...),
-        object=(EntityLiteral, ...),
+        object=(str, ...),
     )
 
     # Create RelationsResponse containing list of RelationItem.
@@ -129,8 +129,10 @@ def _get_relations_litellm(
 
     # Load the system prompt template defining relation extraction rules.
     prompt_template = _load_relations_prompt()
+
     # Format entities as a bullet list for the prompt.
     entities_str = "\n".join(f"- {e}" for e in entities)
+    
     # Build the user prompt with entities and the source text.
     user_prompt = f"""
     Here is the list of entities that were previously extracted from the source text:

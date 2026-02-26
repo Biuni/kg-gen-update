@@ -216,3 +216,9 @@ __marimo__/
 .streamlit/secrets.toml
 
 .DS_Store
+
+# generated graphs 
+graphs_*/
+
+kg_gen/input_generation/agentbench_results/*/
+kg_gen/input_generation/failed_tasks_results/

@@ -4,15 +4,14 @@ import re
 from typing import Union, List, Dict, Optional
 from sentence_transformers import SentenceTransformer
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from .graph import Graph
 from .steps._1_get_entities import get_entities
 from .steps._2_get_relations import get_relations
 from .steps._3_deduplicate import run_deduplication, DeduplicateMethod
 from .utils.chunk_text import chunk_text
 from .visualize.visualize_kg import visualize_kg
-
 import logging
+
 logging.disable(logging.INFO)
 
 class KGGen:
@@ -375,16 +374,22 @@ class KGGen:
             relations = set()
 
             # Process chunks in parallel to speed up extraction.
-            with ThreadPoolExecutor() as executor:
-                future_to_chunk = {
-                    executor.submit(_process, chunk): chunk for chunk in chunks
-                }
+            # with ThreadPoolExecutor() as executor:
+            #     future_to_chunk = {
+            #         executor.submit(_process, chunk): chunk for chunk in chunks
+            #     }
 
-                for future in as_completed(future_to_chunk):
-                    # Merge per-chunk results into global sets.
-                    chunk_entities, chunk_relations = future.result()
-                    entities_with_reasoning.extend(chunk_entities)
-                    relations.update(chunk_relations)
+            #     for future in as_completed(future_to_chunk):
+            #         # Merge per-chunk results into global sets.
+            #         chunk_entities, chunk_relations = future.result()
+            #         entities_with_reasoning.extend(chunk_entities)
+            #         relations.update(chunk_relations)
+            
+            # Process each chunk sequentially, extracting entities and relations
+            for chunk in chunks:
+                chunk_entities, chunk_relations = _process(chunk)
+                entities_with_reasoning.extend(chunk_entities)
+                relations.update(chunk_relations)
 
         # Build the Graph object from extracted entities and relations.
         entities_dict = {name: reasoning for name, reasoning in entities_with_reasoning}

@@ -167,7 +167,7 @@ and can access the observation produced by a tool execution.
 - **Meaning**: Links a State to one of its internal variables (represented as entities such as `state:calculator_ready_true`).
 - **Domain**: state:State  
 - **Range**: state:Calculator_ready  
-- **Direction**: from state:State to the corresponding state:Calculator_ready  
+- **Direction**: from state:State to state:Calculator_ready  
 - **When to create**: Always create this relation for every variable extracted from a `@state(...)` block.
 
 ### Property `state:activeIn (State → Step)`

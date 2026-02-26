@@ -168,8 +168,8 @@ create a act:Tool.
 in time.  
 * **When to create**: A state:State must be created only when the following explicit anchor is present:
     @state(
-            id=<id>
-            current_step_id=<step_id>
+            id=<id>,
+            current_step_id=<step_id>,
             calculator_ready=<calculator_ready>,                  
             search_ready=<search_ready>,                     
             database_connected=<database_connected>,               
@@ -188,13 +188,23 @@ in time.
 
 * **Meaning**: Represents the boolean readiness of the Calculator tool
   at a specific state snapshot.
-* **When to create**:
-  Whenever an explicit @state(...) anchor is present,
-  exactly one state:Calculator_ready entity MUST be created.
-* **Extraction behavior**:
-  From the @state(...) anchor, extract the value of <calculator_ready>.
-* Create exactly one node with identifier:
-      state:Calculator_ready_<calculator_ready> 
+* **When to create**: A state_Calculator_ready must be created only when the following explicit anchor is present:
+    @state(
+            id=<id>,
+            current_step_id=<step_id>,
+            calculator_ready=<calculator_ready>,                  
+            search_ready=<search_ready>,                     
+            database_connected=<database_connected>,               
+            last_user_input=<last_user_input>,  
+            current_step_index=<current_step_index>,                   
+            intentions_pending=<intentions_pending>,  
+            last_action_intent=<last_action_intent>,      
+            last_tool_call=<last_tool_call>,         
+            last_tool_output=<last_tool_output>,                  
+            termination_flag=<termination_flag>                
+        )
+* **Extraction behavior**: Assign the state:Calculator_ready id to the value of <calculator_ready>. If no 
+    @state anchor is present, do not create a state:Calculator_ready.
 
 
 ## Module `task:` 
