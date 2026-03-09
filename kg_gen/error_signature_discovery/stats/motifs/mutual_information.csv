@@ -1,0 +1,13 @@
+feature,mutual_info
+Run->Step->TerminationSignal,0.28716158494919175
+Observation->Step,0.22707163673502873
+Statement->Step,0.13533502008595955
+Intention->Step,0.08820799249721678
+Goal->Intention->ToolCall->Observation,0.08709225811010479
+ToolCall->Observation,0.08392556628661452
+Goal->Intention->ToolCall,0.06140728081472013
+ToolCall->Step,0.05329718038512676
+Goal->Step,0.023582510765215448
+Intention->ToolCall,0.01739982139497398
+Intention->ToolCall->Observation,0.003935620894824021
+Goal->Intention,0.0

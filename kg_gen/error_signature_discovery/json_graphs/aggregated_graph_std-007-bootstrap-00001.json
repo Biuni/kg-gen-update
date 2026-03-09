@@ -1,0 +1,188 @@
+{
+  "nodes": [
+    "trace:Agent_G0",
+    "state:State_G0",
+    "trace:User_G0",
+    "task:Task_G0",
+    "trace:Run_G0",
+    "trace:Step_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "act:Tool_G0",
+    "act:ToolCall_G0",
+    "obs:Observation_G0",
+    "trace:Step_2_G1",
+    "mind:Goal_1_G1",
+    "mind:Statement_1_G1",
+    "mind:Statement_2_G1",
+    "mind:Intention_1_G1",
+    "mind:Statement_3_G1",
+    "mind:Statement_4_G1",
+    "mind:Statement_5_G1",
+    "mind:Statement_6_G1",
+    "mind:Statement_7_G1",
+    "mind:Statement_8_G1",
+    "mind:Statement_9_G1",
+    "mind:Statement_10_G1",
+    "mind:Statement_11_G1",
+    "mind:TerminationSignal_1_G1"
+  ],
+  "edges": [
+    {
+      "source": "mind:TerminationSignal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "mind:Statement_7_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_11_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "state:State_G0",
+      "target": "trace:Step_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "act:ToolCall_G0",
+      "predicate": "mind:commitsToToolCall"
+    },
+    {
+      "source": "trace:Step_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "mind:TerminationSignal_1_G1",
+      "predicate": "trace:endsWith"
+    },
+    {
+      "source": "mind:Statement_9_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "task:Task_G0",
+      "target": "trace:Run_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "mind:Statement_6_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "trace:Step_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Statement_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_8_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "act:ToolCall_G0",
+      "target": "act:Tool_G0",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "obs:Observation_G0",
+      "target": "trace:Step_G0",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "mind:Intention_1_G0",
+      "predicate": "mind:motivates"
+    },
+    {
+      "source": "mind:Statement_10_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_G0",
+      "target": "obs:Observation_G0",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "act:ToolCall_G0",
+      "target": "trace:Step_G0",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Statement_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "state:State_G0",
+      "target": "trace:Agent_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "task:Task_G0",
+      "target": "trace:User_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "mind:Statement_5_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "trace:Agent_G0",
+      "predicate": "trace:performedBy"
+    }
+  ],
+  "label": "completed_True"
+}

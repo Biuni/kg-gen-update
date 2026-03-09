@@ -1,0 +1,256 @@
+{
+  "nodes": [
+    "trace:Run_3064_G0",
+    "trace:Step_1_G0",
+    "trace:Agent_3145_G0",
+    "trace:User_9023_G0",
+    "task:Task_Tstd-004-N41-00003_G0",
+    "state:State_std-004-N41-00003_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "mind:Intention_2_G0",
+    "mind:Intention_3_G0",
+    "mind:Intention_4_G0",
+    "mind:Intention_5_G0",
+    "mind:Intention_6_G0",
+    "mind:Intention_7_G0",
+    "mind:Intention_8_G0",
+    "mind:Intention_9_G0",
+    "mind:Intention_10_G0",
+    "mind:Intention_11_G0",
+    "mind:Intention_12_G0",
+    "mind:Intention_13_G0",
+    "mind:Intention_14_G0",
+    "mind:Intention_15_G0",
+    "mind:Intention_16_G0",
+    "mind:Intention_17_G0",
+    "mind:Intention_18_G0",
+    "mind:Intention_19_G0",
+    "mind:Intention_20_G0",
+    "mind:Intention_21_G0",
+    "mind:Intention_22_G0",
+    "mind:Intention_23_G0",
+    "act:Tool_OS_G0",
+    "act:ToolCall_OS_G0",
+    "obs:Observation_OS_if find /working -type f -name workspace -quit 2>/dev/null; \n then echo yes; else echo no; fi\n\nyes_G0",
+    "trace:Step_2_G1",
+    "mind:Goal_1_G1",
+    "mind:Statement_1_G1",
+    "mind:Statement_2_G1",
+    "mind:Statement_3_G1",
+    "mind:TerminationSignal_1_G1"
+  ],
+  "edges": [
+    {
+      "source": "mind:Intention_21_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_2_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_6_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Intention_7_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_5_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "state:State_std-004-N41-00003_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "trace:Run_3064_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "trace:Run_3064_G0",
+      "target": "mind:TerminationSignal_1_G1",
+      "predicate": "trace:endsWith"
+    },
+    {
+      "source": "trace:Run_3064_G0",
+      "target": "trace:Agent_3145_G0",
+      "predicate": "trace:performedBy"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_4_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_17_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_13_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_23_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:TerminationSignal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "mind:Intention_16_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_18_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_15_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_3064_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_19_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_3_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_9_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_20_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "state:State_std-004-N41-00003_G0",
+      "target": "trace:Agent_3145_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "trace:Step_1_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Intention_10_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Goal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "task:Task_Tstd-004-N41-00003_G0",
+      "target": "trace:User_9023_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "obs:Observation_OS_if find /working -type f -name workspace -quit 2>/dev/null; \n then echo yes; else echo no; fi\n\nyes_G0",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "obs:Observation_OS_if find /working -type f -name workspace -quit 2>/dev/null; \n then echo yes; else echo no; fi\n\nyes_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Intention_12_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_8_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "task:Task_Tstd-004-N41-00003_G0",
+      "target": "trace:Run_3064_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "mind:Intention_14_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_11_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Intention_22_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "act:Tool_OS_G0",
+      "predicate": "act:usesTool"
+    }
+  ],
+  "label": "completed_True"
+}

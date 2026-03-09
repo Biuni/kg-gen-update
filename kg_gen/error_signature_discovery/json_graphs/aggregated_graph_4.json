@@ -1,0 +1,78 @@
+{
+  "nodes": [
+    "trace:Agent_G0",
+    "state:State_G0",
+    "state:Calculator_ready_G0",
+    "trace:User_G0",
+    "task:Task_G0",
+    "trace:Run_G0",
+    "trace:Step_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "mind:Intention_2_G0",
+    "mind:TerminationSignal_G0"
+  ],
+  "edges": [
+    {
+      "source": "mind:TerminationSignal_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "state:State_G0",
+      "target": "trace:Step_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "trace:Agent_G0",
+      "predicate": "trace:performedBy"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "mind:TerminationSignal_G0",
+      "predicate": "trace:endsWith"
+    },
+    {
+      "source": "state:State_G0",
+      "target": "trace:Agent_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "task:Task_G0",
+      "target": "trace:User_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "trace:Run_G0",
+      "target": "trace:Step_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_2_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "task:Task_G0",
+      "target": "trace:Run_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "state:State_G0",
+      "target": "state:Calculator_ready_G0",
+      "predicate": "state:hasVariable"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_G0",
+      "predicate": "mind:goalInStep"
+    }
+  ],
+  "label": "agent_invalid_action_False"
+}

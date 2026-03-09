@@ -1,0 +1,430 @@
+{
+  "nodes": [
+    "trace:Run_2312_G0",
+    "trace:Step_1_G0",
+    "trace:Agent_2477_G0",
+    "trace:User_2784_G0",
+    "task:Task_Tstd-004-N4-00000_G0",
+    "state:State_std-004-N4-00000_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "mind:Intention_2_G0",
+    "mind:Intention_3_G0",
+    "mind:Intention_4_G0",
+    "mind:Intention_5_G0",
+    "mind:Intention_6_G0",
+    "mind:Intention_7_G0",
+    "mind:Intention_8_G0",
+    "mind:Intention_9_G0",
+    "mind:Intention_10_G0",
+    "mind:Intention_11_G0",
+    "act:Tool_OS_G0",
+    "act:ToolCall_OS_G0",
+    "obs:Observation_OS_-bash: /home/jack/test: Permission denied_G0",
+    "trace:Step_2_G1",
+    "mind:Statement_1_G1",
+    "mind:Statement_2_G1",
+    "mind:Intention_1_G1",
+    "mind:Statement_3_G1",
+    "mind:Statement_4_G1",
+    "mind:Intention_2_G1",
+    "mind:Statement_5_G1",
+    "mind:Intention_3_G1",
+    "mind:Statement_6_G1",
+    "mind:Intention_4_G1",
+    "act:Tool_OS_G1",
+    "obs:Observation_OS_bash: /home/jack/test: Permission denied_G1",
+    "trace:Step_3_G2",
+    "mind:Intention_1_G2",
+    "mind:Intention_2_G2",
+    "mind:Intention_3_G2",
+    "mind:Intention_4_G2",
+    "mind:Intention_5_G2",
+    "mind:Intention_6_G2",
+    "mind:Intention_7_G2",
+    "act:Tool_OS_G2",
+    "act:ToolCall_OS_G2",
+    "obs:Observation_OS_love_G2",
+    "trace:Step_4_G3",
+    "mind:Statement_1_G3",
+    "mind:Statement_2_G3",
+    "mind:Statement_3_G3",
+    "mind:Statement_4_G3",
+    "mind:Statement_5_G3",
+    "mind:Statement_6_G3",
+    "mind:Statement_7_G3",
+    "mind:Goal_1_G3",
+    "mind:Statement_8_G3",
+    "mind:Statement_9_G3",
+    "mind:Statement_10_G3",
+    "mind:Statement_11_G3",
+    "mind:Statement_12_G3",
+    "mind:Statement_13_G3",
+    "mind:Statement_14_G3",
+    "mind:Statement_15_G3",
+    "mind:TerminationSignal_1_G3"
+  ],
+  "edges": [
+    {
+      "source": "mind:Statement_15_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "trace:Agent_2477_G0",
+      "predicate": "trace:performedBy"
+    },
+    {
+      "source": "mind:Intention_1_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "trace:Step_3_G2",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "obs:Observation_OS_-bash: /home/jack/test: Permission denied_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "trace:Step_1_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_14_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "trace:Step_3_G2",
+      "target": "trace:Step_4_G3",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_7_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_8_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_5_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "trace:Step_4_G3",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_3_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_10_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_9_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_5_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "obs:Observation_OS_love_G2",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "state:State_std-004-N4-00000_G0",
+      "target": "trace:Agent_2477_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "state:State_std-004-N4-00000_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "mind:Intention_3_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "mind:TerminationSignal_1_G3",
+      "predicate": "trace:endsWith"
+    },
+    {
+      "source": "mind:Intention_2_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:Tool_OS_G1",
+      "target": "act:Tool_OS_G1",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "act:Tool_OS_G2",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "task:Task_Tstd-004-N4-00000_G0",
+      "target": "trace:User_2784_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "mind:Intention_6_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "obs:Observation_OS_-bash: /home/jack/test: Permission denied_G0",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Statement_6_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_10_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_5_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_4_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "obs:Observation_OS_bash: /home/jack/test: Permission denied_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Statement_13_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_3_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:Tool_OS_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Intention_4_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Step_2_G1",
+      "target": "trace:Step_3_G2",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_11_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:TerminationSignal_1_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "mind:Statement_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_9_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "task:Task_Tstd-004-N4-00000_G0",
+      "target": "trace:Run_2312_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "mind:Intention_2_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "act:Tool_OS_G0",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "mind:Statement_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_12_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_7_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_1_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:Tool_OS_G1",
+      "target": "obs:Observation_OS_bash: /home/jack/test: Permission denied_G1",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_4_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_6_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_8_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "obs:Observation_OS_love_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Statement_5_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_4_G1",
+      "target": "act:Tool_OS_G1",
+      "predicate": "mind:commitsToToolCall"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Intention_11_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_7_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_2312_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_6_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Intention_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    }
+  ],
+  "label": "completed_True"
+}

@@ -1,0 +1,1526 @@
+{
+  "nodes": [
+    "trace:Step_2_G0",
+    "mind:Goal_1_G0",
+    "mind:Statement_1_G0",
+    "mind:Statement_2_G0",
+    "mind:Statement_3_G0",
+    "mind:Statement_4_G0",
+    "mind:Statement_5_G0",
+    "mind:Statement_6_G0",
+    "mind:Statement_7_G0",
+    "mind:Statement_8_G0",
+    "mind:Statement_9_G0",
+    "mind:Statement_10_G0",
+    "mind:Statement_11_G0",
+    "mind:Statement_12_G0",
+    "mind:Statement_13_G0",
+    "mind:Statement_14_G0",
+    "mind:Statement_15_G0",
+    "mind:Statement_16_G0",
+    "mind:Statement_17_G0",
+    "mind:Statement_18_G0",
+    "mind:Statement_19_G0",
+    "mind:Statement_20_G0",
+    "mind:Statement_21_G0",
+    "mind:Statement_22_G0",
+    "mind:Statement_23_G0",
+    "mind:Statement_24_G0",
+    "mind:Statement_25_G0",
+    "mind:Statement_26_G0",
+    "mind:Statement_27_G0",
+    "mind:Statement_28_G0",
+    "mind:Statement_29_G0",
+    "mind:Statement_30_G0",
+    "mind:Statement_31_G0",
+    "mind:Statement_32_G0",
+    "mind:Statement_33_G0",
+    "mind:Statement_34_G0",
+    "mind:Statement_35_G0",
+    "mind:Statement_36_G0",
+    "mind:Statement_37_G0",
+    "mind:Statement_38_G0",
+    "mind:Statement_39_G0",
+    "mind:Statement_40_G0",
+    "mind:Statement_41_G0",
+    "mind:Statement_42_G0",
+    "mind:Statement_43_G0",
+    "mind:Statement_44_G0",
+    "mind:Statement_45_G0",
+    "mind:Statement_46_G0",
+    "mind:Statement_47_G0",
+    "mind:Statement_48_G0",
+    "mind:Statement_49_G0",
+    "mind:Statement_50_G0",
+    "mind:Statement_51_G0",
+    "mind:Statement_52_G0",
+    "mind:Statement_53_G0",
+    "mind:Statement_54_G0",
+    "mind:Statement_55_G0",
+    "mind:Statement_56_G0",
+    "mind:Statement_57_G0",
+    "mind:Statement_58_G0",
+    "mind:Statement_59_G0",
+    "mind:Statement_60_G0",
+    "mind:Statement_61_G0",
+    "mind:Statement_62_G0",
+    "mind:Statement_63_G0",
+    "mind:Statement_64_G0",
+    "mind:Statement_65_G0",
+    "mind:Statement_66_G0",
+    "mind:Statement_67_G0",
+    "mind:Statement_68_G0",
+    "mind:Statement_69_G0",
+    "mind:Statement_70_G0",
+    "mind:Statement_71_G0",
+    "mind:Statement_72_G0",
+    "mind:Statement_73_G0",
+    "mind:Statement_74_G0",
+    "mind:Statement_75_G0",
+    "mind:Statement_76_G0",
+    "mind:Statement_77_G0",
+    "mind:Statement_78_G0",
+    "mind:Statement_79_G0",
+    "mind:Statement_80_G0",
+    "mind:Statement_81_G0",
+    "mind:Statement_82_G0",
+    "mind:Statement_83_G0",
+    "mind:Statement_84_G0",
+    "mind:Statement_85_G0",
+    "mind:Statement_86_G0",
+    "mind:Statement_87_G0",
+    "mind:Statement_88_G0",
+    "mind:Statement_89_G0",
+    "mind:Statement_90_G0",
+    "mind:Statement_91_G0",
+    "mind:Statement_92_G0",
+    "mind:Statement_93_G0",
+    "mind:Statement_94_G0",
+    "mind:Statement_95_G0",
+    "mind:Statement_96_G0",
+    "mind:Statement_97_G0",
+    "mind:Statement_98_G0",
+    "mind:Statement_99_G0",
+    "mind:Statement_100_G0",
+    "mind:Statement_101_G0",
+    "mind:Statement_102_G0",
+    "mind:Statement_103_G0",
+    "mind:Statement_104_G0",
+    "mind:Statement_105_G0",
+    "mind:Statement_106_G0",
+    "mind:Statement_107_G0",
+    "mind:Statement_108_G0",
+    "mind:Statement_109_G0",
+    "mind:Statement_110_G0",
+    "mind:Statement_111_G0",
+    "mind:Statement_112_G0",
+    "mind:Statement_113_G0",
+    "mind:Statement_114_G0",
+    "mind:Statement_115_G0",
+    "mind:Statement_116_G0",
+    "mind:Statement_117_G0",
+    "mind:Statement_118_G0",
+    "mind:Statement_119_G0",
+    "mind:Statement_120_G0",
+    "mind:Statement_121_G0",
+    "mind:Statement_122_G0",
+    "mind:Statement_123_G0",
+    "mind:Statement_124_G0",
+    "mind:Statement_125_G0",
+    "mind:Statement_126_G0",
+    "mind:Statement_127_G0",
+    "mind:Statement_128_G0",
+    "mind:Statement_129_G0",
+    "mind:Statement_130_G0",
+    "mind:Statement_131_G0",
+    "mind:Statement_132_G0",
+    "mind:Statement_133_G0",
+    "mind:Statement_134_G0",
+    "mind:Statement_135_G0",
+    "mind:Statement_136_G0",
+    "mind:Statement_137_G0",
+    "mind:Statement_138_G0",
+    "mind:Statement_139_G0",
+    "mind:Statement_140_G0",
+    "mind:Statement_141_G0",
+    "mind:Statement_142_G0",
+    "mind:Statement_143_G0",
+    "mind:Statement_144_G0",
+    "mind:Statement_145_G0",
+    "mind:Statement_146_G0",
+    "mind:Statement_147_G0",
+    "mind:Statement_148_G0",
+    "mind:Statement_149_G0",
+    "mind:Statement_150_G0",
+    "mind:Statement_151_G0",
+    "mind:Statement_152_G0",
+    "mind:Statement_153_G0",
+    "mind:Statement_154_G0",
+    "mind:Statement_155_G0",
+    "mind:Statement_156_G0",
+    "mind:Statement_157_G0",
+    "mind:Statement_158_G0",
+    "mind:Statement_159_G0",
+    "mind:Statement_160_G0",
+    "mind:Statement_161_G0",
+    "mind:Statement_162_G0",
+    "mind:Statement_163_G0",
+    "mind:Statement_164_G0",
+    "mind:Statement_165_G0",
+    "mind:Statement_166_G0",
+    "mind:Statement_167_G0",
+    "mind:Statement_168_G0",
+    "mind:Statement_169_G0",
+    "mind:Statement_170_G0",
+    "mind:Statement_171_G0",
+    "mind:Statement_172_G0",
+    "mind:Statement_173_G0",
+    "mind:Statement_174_G0",
+    "mind:Statement_175_G0",
+    "mind:Statement_176_G0",
+    "mind:Statement_177_G0",
+    "mind:Statement_178_G0",
+    "mind:Statement_179_G0",
+    "mind:Statement_180_G0",
+    "mind:Statement_181_G0",
+    "mind:Statement_182_G0",
+    "mind:Statement_183_G0",
+    "mind:Statement_184_G0",
+    "mind:Statement_185_G0",
+    "mind:Statement_186_G0",
+    "mind:Statement_187_G0",
+    "mind:Statement_188_G0",
+    "mind:Statement_189_G0",
+    "mind:Statement_190_G0",
+    "mind:Statement_191_G0",
+    "mind:Statement_192_G0",
+    "mind:Statement_193_G0",
+    "mind:Statement_194_G0",
+    "mind:Statement_195_G0",
+    "mind:Statement_196_G0",
+    "mind:Statement_197_G0",
+    "mind:Statement_198_G0",
+    "mind:Statement_199_G0",
+    "mind:Statement_200_G0",
+    "mind:Statement_201_G0",
+    "mind:Statement_202_G0",
+    "mind:Statement_203_G0",
+    "mind:Statement_204_G0",
+    "mind:Statement_205_G0",
+    "mind:Statement_206_G0",
+    "mind:Statement_207_G0",
+    "mind:Statement_208_G0",
+    "mind:Statement_209_G0",
+    "mind:Statement_210_G0",
+    "mind:Statement_211_G0",
+    "mind:Statement_212_G0",
+    "mind:Statement_213_G0",
+    "mind:Statement_214_G0",
+    "mind:Statement_215_G0",
+    "mind:Statement_216_G0",
+    "mind:Statement_217_G0",
+    "mind:Statement_218_G0",
+    "mind:Statement_219_G0",
+    "mind:Statement_220_G0",
+    "mind:Statement_221_G0",
+    "mind:Statement_222_G0",
+    "mind:Statement_223_G0",
+    "mind:Statement_224_G0",
+    "mind:Statement_225_G0",
+    "mind:Statement_226_G0",
+    "mind:Statement_227_G0",
+    "mind:Statement_228_G0",
+    "mind:Statement_229_G0",
+    "mind:Statement_230_G0",
+    "mind:Statement_231_G0",
+    "mind:Statement_232_G0",
+    "mind:Statement_233_G0",
+    "mind:Statement_234_G0",
+    "mind:Statement_235_G0",
+    "mind:Statement_236_G0",
+    "mind:Statement_237_G0",
+    "mind:Statement_238_G0",
+    "mind:Statement_239_G0",
+    "mind:Statement_240_G0",
+    "mind:Statement_241_G0",
+    "mind:Statement_242_G0",
+    "mind:Statement_243_G0",
+    "mind:Statement_244_G0",
+    "mind:Statement_245_G0",
+    "mind:Statement_246_G0",
+    "mind:Statement_247_G0",
+    "mind:Statement_248_G0",
+    "mind:Statement_249_G0",
+    "mind:Statement_250_G0",
+    "mind:Statement_251_G0",
+    "mind:Statement_252_G0"
+  ],
+  "edges": [
+    {
+      "source": "mind:Statement_233_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_179_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_165_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_13_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_212_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_9_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_167_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_169_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_6_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_107_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_172_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_193_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_73_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_18_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_117_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_151_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_157_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_63_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_93_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_161_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_75_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_52_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Statement_40_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_80_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_154_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_142_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_131_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_47_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_53_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_50_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_249_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_184_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_147_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_244_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_199_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_163_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_82_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_140_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_87_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_138_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_17_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_49_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_177_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_62_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_239_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_84_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_61_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_30_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_74_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_16_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_173_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_242_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_26_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_124_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_88_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_128_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_218_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_89_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_35_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_78_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_100_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_144_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_83_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_91_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_146_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_43_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_217_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_10_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_143_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_234_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_56_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_141_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_59_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_230_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_125_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_39_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_28_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_241_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_121_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_20_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_248_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_5_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_33_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_136_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_243_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_97_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_57_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_201_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_210_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_223_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_58_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_187_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_192_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_227_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_160_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_118_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_174_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_155_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_96_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_213_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_129_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_135_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_19_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_206_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_85_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_111_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_41_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_37_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_139_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_102_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_105_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_72_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_200_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_214_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_32_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_99_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_123_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_127_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_45_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_11_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_166_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_182_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_34_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_185_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_195_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_205_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_54_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_198_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_226_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_186_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_180_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_232_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_120_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_245_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_81_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_190_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_90_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_222_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_42_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_251_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_22_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_109_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_46_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_113_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_36_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_21_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_194_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_145_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_183_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_208_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_149_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_12_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_171_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_112_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_4_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_170_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_220_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_229_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_221_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_168_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_69_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_240_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_237_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_23_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_65_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_176_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_224_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_114_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_77_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_71_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_66_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_67_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_202_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_119_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_235_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_164_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_48_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_203_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_27_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_134_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_231_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_115_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_215_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_204_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_225_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_207_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_95_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_133_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_148_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_104_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_51_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_197_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_38_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_103_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_153_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_122_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_14_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_55_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_238_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_92_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_86_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_116_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_175_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_246_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_209_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_98_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_130_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_252_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_110_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_108_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_188_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_25_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_189_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_132_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_60_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_64_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_15_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_158_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_181_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_31_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_106_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_70_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_247_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_162_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_79_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_211_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_7_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_196_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_76_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_94_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_1_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_137_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_191_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_24_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_8_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_219_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_159_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_250_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_3_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_44_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_178_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_152_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_68_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_228_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_150_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_236_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_126_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_101_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_156_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_29_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_216_G0",
+      "target": "trace:Step_2_G0",
+      "predicate": "mind:assertedIn"
+    }
+  ],
+  "label": "agent_invalid_action_False"
+}

@@ -1,0 +1,225 @@
+{
+  "nodes": [
+    "trace:Run_2250_G0",
+    "trace:Step_1_G0",
+    "trace:Agent_1555_G0",
+    "trace:User_2838_G0",
+    "task:Task_Tstd-007-bootstrap-00045_G0",
+    "state:State_std-007-bootstrap-00045_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "mind:Intention_2_G0",
+    "mind:Intention_3_G0",
+    "mind:Statement_1_G0",
+    "mind:Statement_2_G0",
+    "act:Tool_OS_G0",
+    "act:ToolCall_OS_G0",
+    "obs:Observation_OS_5_G0",
+    "trace:Step_2_G1",
+    "mind:Goal_1_G1",
+    "mind:Statement_1_G1",
+    "mind:Statement_2_G1",
+    "mind:Statement_3_G1",
+    "mind:Statement_4_G1",
+    "mind:Statement_5_G1",
+    "mind:Statement_6_G1",
+    "mind:Statement_7_G1",
+    "mind:Statement_8_G1",
+    "mind:Statement_9_G1",
+    "mind:Statement_10_G1",
+    "mind:Statement_11_G1",
+    "mind:Statement_12_G1",
+    "mind:Intention_1_G1",
+    "mind:Statement_13_G1",
+    "mind:Statement_14_G1",
+    "mind:TerminationSignal_1_G1"
+  ],
+  "edges": [
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00045_G0",
+      "target": "trace:Run_2250_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "mind:Statement_5_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_12_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_2250_G0",
+      "target": "trace:Agent_1555_G0",
+      "predicate": "trace:performedBy"
+    },
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00045_G0",
+      "target": "trace:User_2838_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Statement_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_11_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Statement_6_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_7_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_1_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_2_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_14_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:TerminationSignal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "mind:Statement_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_9_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00045_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "mind:Intention_3_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_2250_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "act:ToolCall_OS_G0",
+      "predicate": "mind:commitsToToolCall"
+    },
+    {
+      "source": "mind:Statement_13_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_10_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "obs:Observation_OS_5_G0",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "obs:Observation_OS_5_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Statement_8_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00045_G0",
+      "target": "trace:Agent_1555_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "mind:Intention_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "act:Tool_OS_G0",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "trace:Run_2250_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_2_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_2250_G0",
+      "target": "mind:TerminationSignal_1_G1",
+      "predicate": "trace:endsWith"
+    }
+  ],
+  "label": "completed_True"
+}

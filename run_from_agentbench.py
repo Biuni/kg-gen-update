@@ -1,14 +1,16 @@
 import os
 import time
+import json
+import traceback
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import datetime
 from kg_gen import KGGen
-import traceback
-from kg_gen.input_generation.kggen_input_os_interaction import get_failed_samples_inputs, load_failed_samples
-import litellm
 from litellm.exceptions import RateLimitError
-import json
 from pydantic_core import ValidationError
+from kg_gen.input_generation.core.base_loader import load_failed_samples, save_failed_jsonl, build_reasonings_structure, extract_model_from_config
+from kg_gen.input_generation.tasks.dbbench import DBBenchExtractor
+from kg_gen.input_generation.tasks.os_interaction import OSInteractionExtractor
 
 
 # Load environment variables
@@ -16,20 +18,9 @@ load_dotenv()
 
 
 def pretty_print_graph(graph, title="Graph"):
-    """
-    Pretty-print the components of a knowledge graph.
-
-    This function prints entities, edges, relations, and optional clusters
-    in a structured and human-readable format.
-
-    Args:
-        graph: A KGGen graph object (Pydantic-based).
-        title (str): Title displayed before the graph content.
-    """
     print("\n" + "="*60)
     print(f"{title}")
     print("="*60)
-
     entities = graph.entities or {}
     edges = graph.edges or set()
     relations = graph.relations or set()
@@ -37,7 +28,7 @@ def pretty_print_graph(graph, title="Graph"):
     print("\nEntities:")
     if entities:
         for key in sorted(entities.keys()):
-            print(f"\n  - {key}:")
+            print(f"  - {key}:")
             value = entities[key]
             if isinstance(value, dict):
                 print(json.dumps(value, indent=6))
@@ -73,68 +64,218 @@ def pretty_print_graph(graph, title="Graph"):
     print("="*60 + "\n")
 
 
+def get_sample_label(sample):
+    """
+    Genera una label stringa per un sample, combinando `status` e `result`.
+    Esempio: "completed_true", "agent invalid action_false", ecc.
+    """
+    try:
+        output = sample.get("output", {})
+        status = output.get("status", "unknown").replace(" ", "_")
+        result = output.get("result", {}).get("result", "unknown")
+        label = f"{status}_{result}"
+    except Exception as e:
+        print(f"Error generating label for sample {sample.get('index')}: {e}")
+        label = "unknown_unknown"
+    return label
+
+
+# Per salvare i componenti (nodi e archi) del grafo sotto forma di json ordinato
+def save_graph_as_json(graph, output_path, sample=None):
+    """
+    Salva il grafo in un JSON con la struttura:
+    {
+        "nodes": [...],
+        "edges": [
+            {"source": "...", "target": "...", "predicate": "..."},
+        ]
+    }
+    """
+    data = {
+        "nodes": list(graph.entities.keys()) if graph.entities else [],
+        "edges": []
+    }
+
+    if graph.relations:
+        for subj, pred, obj in graph.relations:
+            data["edges"].append({
+                "source": subj,
+                "target": obj,
+                "predicate": pred
+            })
+    
+    # Aggiungi la label se il sample è fornito
+    if sample:
+        data["label"] = get_sample_label(sample)
+
+    # Salva il JSON
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"Saved graph JSON to: {output_path}")
+
+
+
 def safe_generate(kg, reasoning_block, context, max_retries=10):
-    """
-    Safely generate a knowledge graph from a reasoning block.
-
-    Handles RateLimitError, ValidationError, and other exceptions
-    with exponential backoff retries. Prints full error details for
-    debugging.
-
-    Args:
-        kg: KGGen instance
-        reasoning_block: Input data for a single reasoning step
-        context: Context string passed to KGGen
-        max_retries: Maximum number of retry attempts on error
-
-    Returns:
-        Generated KGGen graph object
-    """
     for attempt in range(max_retries):
         try:
             return kg.generate(input_data=reasoning_block, context=context)
-
         except RateLimitError as e:
-            # Handle API rate limiting
             wait_time = 2 * (attempt + 1)
-            print(f"[RateLimit] Sleeping {wait_time:.2f}s...")
+            print(f"[RateLimit] Sleeping {wait_time}s...")
             print(f"Error details: {e}")
             time.sleep(wait_time)
-
         except ValidationError as e:
-            # Handle invalid JSON returned by the model
             wait_time = 2 * (attempt + 1)
             print("[Invalid JSON] Model returned truncated output.")
             print(f"Error details: {e}")
-            print(f"Retrying in {wait_time:.2f}s...")
+            print(f"Retrying in {wait_time}s...")
             time.sleep(wait_time)
-
         except Exception as e:
-            # Catch-all for other unexpected errors
             wait_time = 2 * (attempt + 1)
             print(f"[Other Error] Attempt {attempt+1}/{max_retries}")
-            print("Full traceback:")
-            traceback.print_exc()  # <-- stampa tutto lo stack trace
-            print(f"Retrying in {wait_time:.2f}s...")
+            traceback.print_exc()
+            print(f"Retrying in {wait_time}s...")
             time.sleep(wait_time)
-
     raise Exception("Max retries exceeded.")
 
 
-if __name__ == "__main__":
 
-    # --- Paths to AgentBench results ---
-    base_dir = Path(__file__).parent
-    results_root = base_dir / "kg_gen" / "input_generation" / "agentbench_results" / "2026-02-25-15-20-17"
-    jsonl_path = results_root / "qwen3-14b-ollama-thinking-parameter" / "os-std" / "runs.jsonl"
-    config_path = results_root / "config.yaml"
+def get_extractor(task_type):
+    if task_type.startswith("dbbench"):
+        return DBBenchExtractor()
+    elif task_type.startswith("os"):
+        return OSInteractionExtractor()
+    else:
+        raise ValueError(f"Unknown task type: {task_type}")
 
-    # Folder name to store generated graphs
-    results_folder_name = results_root.name
-    graphs_root_dir = base_dir / f"graphs_{results_folder_name}"
+
+# generazione dei grafi per un sample (un task)
+def generate_graphs_for_sample(kg, sample, extractor, model_name, graphs_root_dir, context):
+    sample_index = sample.get("index", "unknown")
+    safe_sample_id = str(sample_index).replace("/", "_").replace(" ", "_")
+    sample_dir = graphs_root_dir / f"aggregated_graph_{safe_sample_id}"
+    sample_dir.mkdir(exist_ok=True)
+
+    # Build reasoning steps
+    reasoning_blocks = build_reasonings_structure(sample, model_name=model_name, extractor=extractor)
+
+    # Save KGGen input for traceability
+    input_file = sample_dir / "kggen_input.json"
+    if not input_file.exists():
+        with open(input_file, "w", encoding="utf-8") as f:
+            json.dump(reasoning_blocks, f, indent=2, ensure_ascii=False)
+
+    # Collect graphs, skip already generated steps
+    graphs = {}
+    for step_id, block in reasoning_blocks.items():
+        graph_html_path = sample_dir / f"step_{step_id}.html"
+        if graph_html_path.exists():
+            continue
+
+        print(f"Generating graph for step {step_id}...")
+        graph = safe_generate(kg, block, context)
+        graphs[step_id] = graph
+
+        # Save per-step visualization
+        kg.visualize(graph, str(graph_html_path), open_in_browser=False)
+
+    # Aggregate all graphs
+    all_graphs = [graphs[step_id] for step_id in sorted(graphs.keys())]
+    if all_graphs:
+        output_html = sample_dir / "aggregated_graph.html"
+        if not output_html.exists():
+            print("Generating aggregated graph...")
+            aggregated_graph = kg.aggregate(all_graphs)
+            kg.visualize(aggregated_graph, str(output_html), open_in_browser=False)
+            print(f"Saved aggregated graph to: {output_html}")
+
+            # Salva JSON con nodi e archi
+
+            # Cartella di destinazione dei JSON
+            base_dir = Path(__file__).parent  # kg-gen-update
+            json_graphs_dir = base_dir / "kg_gen" / "error_signature_discovery" / "json_graphs"
+            json_graphs_dir.mkdir(parents=True, exist_ok=True)
+
+            # Salva JSON con nodi e archi usando l'index del sample
+            sample_index = sample.get("index", "unknown")
+            safe_sample_id = str(sample_index).replace("/", "_").replace(" ", "_")
+            json_output_path = json_graphs_dir / f"aggregated_graph_{safe_sample_id}.json"
+
+            save_graph_as_json(aggregated_graph, json_output_path, sample=sample)
+
+
+def process_all_samples(results_root, task_name, only_failed:bool):
+    """
+    Genera grafi per tutti i sample (solo failed o tutti) di un task specifico.
+    """
+    jsonl_path = results_root / "qwen3-14b-ollama" / task_name / "runs.jsonl"
+    if not jsonl_path.exists():
+        print(f"No runs.jsonl found for {task_name}, skipping...")
+        return
+    
+    samples = []
+
+    # se si desidera estrarre i grafi solo per i failed samples, si estraggono (se già non sono stati estratti) e si ricavano i samples
+    if only_failed:
+        # se i failed samples erano già stati filtrati, non viene ripetuta l'operazione
+        failed_samples_files = list(results_root.glob(f"{task_name}_failed_samples_*.jsonl"))
+        if failed_samples_files:
+            print(f"Failed samples already extracted for {task_name}, loading the latest...")
+            latest_failed_file = sorted(failed_samples_files)[-1]
+            with open(latest_failed_file, "r", encoding="utf-8") as f:
+                samples = [json.loads(line) for line in f]
+        else:
+            samples = load_failed_samples(jsonl_path)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            failed_output_path = results_root / f"{task_name}_failed_samples_{timestamp}.jsonl"
+            save_failed_jsonl(samples, failed_output_path)
+            print(f"Saved failed samples to: {failed_output_path}")
+
+        if not samples:
+            print("No failed samples found. Skipping...")
+            return
+    # altrimenti consideriamo tutti i samples dei task corretti e non
+    else:
+        with open(jsonl_path, 'r', encoding="utf-8") as f:
+            samples = [json.loads(line) for line in f]
+
+    # Inizializza KGGen
+    kg = KGGen(
+        model=os.getenv("LLM_MODEL"),
+        api_key=os.getenv("LLM_API_KEY"),
+        temperature=float(os.getenv("LLM_TEMPERATURE")),
+        api_base=os.getenv("API_BASE"),
+        retrieval_model=os.getenv("RETRIEVAL_MODEL"),
+    )
+    context = "AgentBench Reasoning"
+    extractor = get_extractor(task_name)
+
+    graphs_root_dir = Path(results_root).parent / f"graphs_{results_root.name}_{task_name}"
     graphs_root_dir.mkdir(exist_ok=True)
 
-    # --- Initialize KGGen ---
+    for sample in samples:
+        generate_graphs_for_sample(kg, sample, extractor, extract_model_from_config(results_root / "config.yaml"), graphs_root_dir, context)
+
+
+def process_single_sample(results_root, task_name, sample_index):
+    """
+    Genera grafi solo per uno specifico sample dato l'index.
+    """
+    jsonl_path = results_root / "qwen3-14b-ollama" / task_name / "runs.jsonl"
+    if not jsonl_path.exists():
+        print(f"No runs.jsonl found for {task_name}, skipping...")
+        return
+
+    if jsonl_path:
+        with open(jsonl_path, "r", encoding="utf-8") as f:
+            samples = [json.loads(line) for line in f]
+    
+    sample = next((s for s in samples if str(s.get("index")) == str(sample_index)), None)
+    if not sample:
+        print(f"No sample with index {sample_index} found. Skipping...")
+        return
+
     kg = KGGen(
         model=os.getenv("LLM_MODEL"),
         api_key=os.getenv("LLM_API_KEY"),
@@ -144,126 +285,17 @@ if __name__ == "__main__":
     )
 
     context = "AgentBench Reasoning"
+    extractor = get_extractor(task_name)
+    graphs_root_dir = Path(results_root).parent / f"graphs_{results_root.name}_{task_name}"
+    graphs_root_dir.mkdir(exist_ok=True)
 
-    print("Generating KGGen input from failed AgentBench samples...")
-    kg_inputs_list = get_failed_samples_inputs(jsonl_path, config_path)
+    generate_graphs_for_sample(kg, sample, extractor, extract_model_from_config(results_root / "config.yaml"), graphs_root_dir, context)
 
-    if not kg_inputs_list:
-        print("No failed samples found. Exiting.")
-        exit()
 
-    # Load all runs to retrieve real sample IDs
-    with open(jsonl_path, "r", encoding="utf-8") as f:
-        all_runs = [json.loads(line) for line in f]
-
-    # Filter only failed runs
-    failed_runs = load_failed_samples(jsonl_path)
-
-    print(f"\n{len(kg_inputs_list)} failed samples available.")
+if __name__ == "__main__":
+    base_dir = Path(__file__).parent
+    results_root = base_dir / "kg_gen" / "input_generation" / "agentbench_results" / "2026-02-25-15-20-17"
     
-    # Ask user to select mode
-    mode = input(
-        "Type:\n"
-        "  - a  → generate graphs for ALL failed samples\n"
-        "  - s  → select a single sample\n"
-        "Choice: "
-    ).strip().lower()
+    process_single_sample(results_root, "os-std", "std-001-stock-00000")
 
-    # ============================================================
-    # MODE: ALL FAILED SAMPLES
-    # ============================================================
-    if mode == "a":
-
-        for idx, (run_data, selected_input) in enumerate(zip(failed_runs, kg_inputs_list)):
-
-            # Retrieve the actual sample ID
-            sample_id = run_data.get("index", f"sample-{idx:03d}")
-            safe_sample_id = str(sample_id).replace("/", "_").replace(" ", "_")
-
-            print(f"\n\n========== SAMPLE {safe_sample_id} ==========")
-
-            # Create folder for this sample's graph
-            sample_dir = graphs_root_dir / f"aggregated_graph_{safe_sample_id}"
-            sample_dir.mkdir(exist_ok=True)
-
-            # Save the input JSON used for KGGen
-            input_file = sample_dir / "kggen_input.json"
-            with open(input_file, "w", encoding="utf-8") as f:
-                json.dump(selected_input, f, indent=2, ensure_ascii=False)
-
-            graphs = {}
-            
-            # Generate graph for each reasoning step
-            for step_id, reasoning_block in selected_input.items():
-                print(f"Generating graph for reasoning step {step_id}...")
-                graph = safe_generate(kg, reasoning_block, context)
-                graphs[step_id] = graph
-            
-            print("Generating aggregated graph...")
-            aggregated_graph = kg.aggregate(list(graphs.values()))
-
-            # Save visualization HTML
-            output_html = sample_dir / "aggregated_graph.html"
-            kg.visualize(aggregated_graph, str(output_html), open_in_browser=False)
-
-            print(f"Saved aggregated graph to: {output_html}")
-
-        print("\nAll graphs generated successfully.")
-        print(f"Output folder: {graphs_root_dir}")
-
-    # ============================================================
-    # MODE: SINGLE SAMPLE
-    # ============================================================
-    elif mode == "s":
-        
-        # Ask the user to enter the sample index
-        sample_index_input = input("Enter the sample 'index' to process: ").strip()
-        
-        available_indices = [r.get("index") for r in failed_runs]
-
-        if sample_index_input not in map(str, available_indices):
-            print("Invalid sample index. Exiting.")
-        exit()
-
-        if not sample_idx.isdigit() or int(sample_idx) >= len(kg_inputs_list):
-            print("Invalid choice. Exiting.")
-            exit()
-
-        # Find the corresponding entry in kg_inputs_list
-        idx = next(i for i, r in enumerate(failed_runs) if str(r.get("index")) == sample_index_input)
-        selected_input = kg_inputs_list[idx]
-
-        # Safe sample ID for folder naming
-        safe_sample_id = str(sample_index_input).replace("/", "_").replace(" ", "_")
-
-        print(f"\n========== SAMPLE {safe_sample_id} ==========")
-        
-        # Create folder for graphs
-        sample_dir = graphs_root_dir / f"aggregated_graph_{safe_sample_id}"
-        sample_dir.mkdir(exist_ok=True)
-
-        # Save KGGen input
-        input_file = sample_dir / "kggen_input.json"
-        with open(input_file, "w", encoding="utf-8") as f:
-            json.dump(selected_input, f, indent=2, ensure_ascii=False)
-
-        graphs = {}
-        
-        # Generate and collect graphs for each reasoning step
-        for step_id, reasoning_block in selected_input.items():
-            print(f"\n=== Generating graph for reasoning step {step_id} ===")
-            graph = safe_generate(kg, reasoning_block, context)
-            graphs[step_id] = graph
-        
-        # Aggregate all step graphs
-        aggregated_graph = kg.aggregate(list(graphs.values()))
-        
-        # Visualize and save
-        output_html = sample_dir / "aggregated_graph.html"
-        kg.visualize(aggregated_graph, str(output_html), open_in_browser=True)
-
-        print(f"\nSaved aggregated graph to: {output_html}")
-        print("Done.")
-
-    else:
-        print("Invalid option.")
+    

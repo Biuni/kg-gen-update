@@ -1,0 +1,13 @@
+feature,mutual_info
+run_without_toolcall_or_termination,0.2768426888398663
+run_without_termination,0.1922025862582213
+step_without_goal,0.1655187572936938
+step_without_intention,0.1450391282866219
+missing_goal_intention_toolcall,0.11696899378008996
+run_without_toolcall,0.11456938260121419
+intention_without_toolcall,0.07015594179835882
+missing_goal_intention_toolcall_observation,0.04801300332767022
+goal_without_intention,0.0
+missing_intention_toolcall_observation,0.0
+null_observation_present,0.0
+toolcall_without_observation,0.0

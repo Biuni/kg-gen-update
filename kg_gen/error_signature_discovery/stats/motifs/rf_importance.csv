@@ -1,0 +1,13 @@
+feature,importance
+Statement->Step,0.2593566933640907
+Intention->Step,0.2011630626746081
+Run->Step->TerminationSignal,0.1485207097701531
+Goal->Step,0.08080337821238451
+Observation->Step,0.07479350415023907
+Goal->Intention,0.05311302990723413
+ToolCall->Step,0.046924481543001946
+ToolCall->Observation,0.04100554293321984
+Intention->ToolCall,0.028231072171753562
+Intention->ToolCall->Observation,0.02416267872037576
+Goal->Intention->ToolCall->Observation,0.023111167784223514
+Goal->Intention->ToolCall,0.01881467876871591

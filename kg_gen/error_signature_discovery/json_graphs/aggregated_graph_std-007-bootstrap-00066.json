@@ -1,0 +1,906 @@
+{
+  "nodes": [
+    "trace:Run_3268_G0",
+    "trace:Step_1_G0",
+    "trace:Agent_1812_G0",
+    "trace:User_2239_G0",
+    "task:Task_Tstd-007-bootstrap-00066_G0",
+    "state:State_std-007-bootstrap-00066_G0",
+    "mind:Goal_1_G0",
+    "mind:Intention_1_G0",
+    "act:Tool_OS_G0",
+    "act:ToolCall_OS_G0",
+    "obs:Observation_OS_grep: ./sys/kernel/notes: binary file matches_G0",
+    "trace:Step_2_G1",
+    "mind:Goal_1_G1",
+    "mind:Statement_1_G1",
+    "mind:Statement_2_G1",
+    "mind:Statement_3_G1",
+    "mind:Statement_4_G1",
+    "mind:Intention_1_G1",
+    "mind:Intention_2_G1",
+    "mind:Intention_3_G1",
+    "mind:Statement_5_G1",
+    "mind:Statement_6_G1",
+    "mind:Statement_7_G1",
+    "mind:Statement_8_G1",
+    "mind:Intention_4_G1",
+    "act:Tool_OS_G1",
+    "act:ToolCall_OS_G1",
+    "obs:Observation_OS_grep: ./sys/power/pm_wakeup_irq: No data available\ngrep: ./sys/class/gpio/unexport: Permission denied\ngrep: ./sys/class/gpio/export: Permission denied\ngrep: ./sys/devices/isa/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/software/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/ibs_op/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/reset: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/rescan: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/remove: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/re\n[truncated because the output is too long]_G1",
+    "trace:Step_3_G2",
+    "mind:Statement_1_G2",
+    "mind:Statement_2_G2",
+    "mind:Statement_3_G2",
+    "mind:Statement_4_G2",
+    "mind:Statement_5_G2",
+    "mind:Statement_6_G2",
+    "mind:Statement_7_G2",
+    "mind:Statement_8_G2",
+    "mind:Statement_9_G2",
+    "mind:Statement_10_G2",
+    "act:Tool_OS_G2",
+    "act:ToolCall_OS_G2",
+    "obs:Observation_OS_grep: ./proc/sysrq-trigger: Permission denied\ngrep: ./proc/1/task/1/personality: Operation not permitted\ngrep: ./proc/1/task/1/syscall: Operation not permitted\ngrep: ./proc/1/task/1/mem: Permission denied\ngrep: ./proc/1/task/1/clear_refs: Invalid argument_G2",
+    "trace:Step_4_G3",
+    "mind:Goal_1_G3",
+    "mind:Intention_1_G3",
+    "mind:Intention_2_G3",
+    "mind:Intention_3_G3",
+    "mind:Intention_4_G3",
+    "mind:Intention_5_G3",
+    "act:Tool_OS_G3",
+    "act:ToolCall_OS_G3",
+    "obs:Observation_OS_None_G3",
+    "trace:Step_5_G4",
+    "mind:Goal_1_G4",
+    "mind:Statement_1_G4",
+    "mind:Statement_2_G4",
+    "mind:Statement_3_G4",
+    "mind:Statement_4_G4",
+    "mind:Statement_5_G4",
+    "mind:Statement_6_G4",
+    "mind:Statement_7_G4",
+    "mind:Statement_8_G4",
+    "mind:Statement_9_G4",
+    "mind:Statement_10_G4",
+    "mind:Statement_11_G4",
+    "mind:Statement_12_G4",
+    "mind:Statement_13_G4",
+    "mind:Statement_14_G4",
+    "mind:Statement_15_G4",
+    "mind:Statement_16_G4",
+    "mind:Statement_17_G4",
+    "mind:Statement_18_G4",
+    "mind:Statement_19_G4",
+    "mind:Statement_20_G4",
+    "mind:Statement_21_G4",
+    "mind:Statement_22_G4",
+    "mind:Statement_23_G4",
+    "mind:Statement_24_G4",
+    "mind:Statement_25_G4",
+    "mind:Statement_26_G4",
+    "mind:Statement_27_G4",
+    "mind:Statement_28_G4",
+    "mind:Statement_29_G4",
+    "mind:Statement_30_G4",
+    "mind:Statement_31_G4",
+    "mind:Statement_32_G4",
+    "mind:Statement_33_G4",
+    "mind:Statement_34_G4",
+    "mind:Statement_35_G4",
+    "act:Tool_OS_G4",
+    "act:ToolCall_OS_G4",
+    "obs:Observation_OS_None_G4",
+    "trace:Step_6_G5",
+    "mind:Statement_1_G5",
+    "mind:Statement_2_G5",
+    "mind:Statement_3_G5",
+    "mind:Statement_4_G5",
+    "mind:Statement_5_G5",
+    "mind:Statement_6_G5",
+    "mind:Statement_7_G5",
+    "mind:Statement_8_G5",
+    "mind:Statement_9_G5",
+    "mind:Statement_10_G5",
+    "mind:Statement_11_G5",
+    "mind:Statement_12_G5",
+    "mind:Statement_13_G5",
+    "mind:Statement_14_G5",
+    "mind:Statement_15_G5",
+    "mind:Statement_16_G5",
+    "mind:Statement_17_G5",
+    "mind:Statement_18_G5",
+    "mind:Statement_19_G5",
+    "mind:Statement_20_G5",
+    "mind:Statement_21_G5",
+    "mind:Statement_22_G5",
+    "mind:Statement_23_G5",
+    "mind:Statement_24_G5",
+    "mind:Statement_25_G5",
+    "mind:Statement_26_G5",
+    "mind:Statement_27_G5",
+    "mind:Statement_28_G5",
+    "mind:Statement_29_G5",
+    "mind:Statement_30_G5",
+    "mind:Statement_31_G5",
+    "mind:Statement_32_G5",
+    "mind:Statement_33_G5",
+    "mind:Statement_34_G5",
+    "mind:Statement_35_G5",
+    "mind:Statement_36_G5",
+    "mind:Statement_37_G5",
+    "mind:Statement_38_G5",
+    "mind:Statement_39_G5",
+    "mind:Statement_40_G5",
+    "mind:Statement_41_G5",
+    "mind:Statement_42_G5",
+    "mind:Statement_43_G5",
+    "mind:Statement_44_G5",
+    "mind:Statement_45_G5",
+    "mind:TerminationSignal_1_G5"
+  ],
+  "edges": [
+    {
+      "source": "mind:Statement_3_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_38_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_9_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_5_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_17_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_44_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_42_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_21_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_9_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_5_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_19_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_5_G4",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "act:ToolCall_OS_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Statement_17_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_24_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_16_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_21_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_10_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_45_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_3_G2",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Intention_2_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_23_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_39_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_31_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "act:Tool_OS_G2",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "mind:Statement_23_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_1_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "obs:Observation_OS_grep: ./sys/kernel/notes: binary file matches_G0",
+      "target": "act:ToolCall_OS_G0",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Statement_30_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_22_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_6_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_4_G3",
+      "target": "trace:Step_5_G4",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_24_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_43_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_35_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_25_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00066_G0",
+      "target": "trace:User_2239_G0",
+      "predicate": "task:requestedBy"
+    },
+    {
+      "source": "mind:Statement_11_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G1",
+      "target": "act:Tool_OS_G1",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "mind:Statement_34_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_41_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_3_G2",
+      "target": "trace:Step_4_G3",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_12_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_10_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "act:Tool_OS_G0",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "mind:Statement_14_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_2_G1",
+      "target": "trace:Step_3_G2",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_1_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_29_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_8_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_3_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G3",
+      "target": "act:Tool_OS_G3",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00066_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "state:activeIn"
+    },
+    {
+      "source": "mind:Statement_10_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_32_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_7_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_11_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_4_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_6_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Statement_8_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_5_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Agent_1812_G0",
+      "predicate": "trace:performedBy"
+    },
+    {
+      "source": "act:ToolCall_OS_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "obs:Observation_OS_grep: ./sys/kernel/notes: binary file matches_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G4",
+      "target": "act:Tool_OS_G4",
+      "predicate": "act:usesTool"
+    },
+    {
+      "source": "mind:Statement_8_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_5_G4",
+      "target": "trace:Step_6_G5",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_40_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_22_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_28_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Step_1_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:nextStep"
+    },
+    {
+      "source": "mind:Statement_5_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_7_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_5_G3",
+      "target": "act:ToolCall_OS_G3",
+      "predicate": "mind:commitsToToolCall"
+    },
+    {
+      "source": "mind:Statement_4_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_33_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_25_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_6_G5",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Statement_3_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G3",
+      "target": "obs:Observation_OS_None_G3",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Statement_18_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_6_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_7_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_1_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_4_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_33_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "mind:Intention_1_G0",
+      "predicate": "mind:motivates"
+    },
+    {
+      "source": "mind:Statement_27_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_26_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "obs:Observation_OS_grep: ./proc/sysrq-trigger: Permission denied\ngrep: ./proc/1/task/1/personality: Operation not permitted\ngrep: ./proc/1/task/1/syscall: Operation not permitted\ngrep: ./proc/1/task/1/mem: Permission denied\ngrep: ./proc/1/task/1/clear_refs: Invalid argument_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Statement_20_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_1_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_36_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_35_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_19_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:TerminationSignal_1_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:terminates"
+    },
+    {
+      "source": "mind:Statement_20_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "act:ToolCall_OS_G0",
+      "predicate": "mind:commitsToToolCall"
+    },
+    {
+      "source": "mind:Statement_9_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "obs:Observation_OS_grep: ./sys/power/pm_wakeup_irq: No data available\ngrep: ./sys/class/gpio/unexport: Permission denied\ngrep: ./sys/class/gpio/export: Permission denied\ngrep: ./sys/devices/isa/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/software/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/ibs_op/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/power/autosuspend_delay_ms: Input/output error\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/reset: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/rescan: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/0000:84:00.0/remove: Permission denied\ngrep: ./sys/devices/pci0000:80/0000:80:07.1/re\n[truncated because the output is too long]_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "mind:Statement_6_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_30_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_31_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Goal_1_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "mind:Statement_15_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_4_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "mind:Statement_13_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00066_G0",
+      "target": "trace:Run_3268_G0",
+      "predicate": "task:handledByRun"
+    },
+    {
+      "source": "mind:Statement_29_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_18_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_27_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_16_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_2_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_4_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "mind:Statement_12_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "obs:Observation_OS_None_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_2_G1",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Statement_15_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Intention_3_G3",
+      "target": "trace:Step_4_G3",
+      "predicate": "mind:expressedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "mind:TerminationSignal_1_G5",
+      "predicate": "trace:endsWith"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_4_G3",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Statement_8_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_14_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_34_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_13_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_1_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G1",
+      "target": "trace:Step_2_G1",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "obs:Observation_OS_None_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "obs:observedIn"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "obs:Observation_OS_grep: ./proc/sysrq-trigger: Permission denied\ngrep: ./proc/1/task/1/personality: Operation not permitted\ngrep: ./proc/1/task/1/syscall: Operation not permitted\ngrep: ./proc/1/task/1/mem: Permission denied\ngrep: ./proc/1/task/1/clear_refs: Invalid argument_G2",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Statement_28_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_37_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_32_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_26_G5",
+      "target": "trace:Step_6_G5",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_3_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "mind:Statement_7_G4",
+      "target": "trace:Step_5_G4",
+      "predicate": "mind:assertedIn"
+    },
+    {
+      "source": "trace:Run_3268_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "trace:hasStep"
+    },
+    {
+      "source": "mind:Goal_1_G0",
+      "target": "trace:Step_1_G0",
+      "predicate": "mind:goalInStep"
+    },
+    {
+      "source": "act:ToolCall_OS_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "act:usedInStep"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00066_G0",
+      "target": "trace:Agent_1812_G0",
+      "predicate": "state:ownedBy"
+    },
+    {
+      "source": "act:ToolCall_OS_G4",
+      "target": "obs:Observation_OS_None_G4",
+      "predicate": "obs:results"
+    },
+    {
+      "source": "mind:Statement_5_G2",
+      "target": "trace:Step_3_G2",
+      "predicate": "mind:assertedIn"
+    }
+  ],
+  "label": "completed_False"
+}
