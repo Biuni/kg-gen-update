@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Knowledge Graph Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            height: 100vh;
+            transition: grid-template-columns 0.3s ease;
+        }
+
+        .layout.sidebar-collapsed {
+            grid-template-columns: 0px 1fr;
+        }
+
+        .layout.sidebar-disabled {
+            grid-template-columns: 1fr;
+            width: 100%;
+        }
+
+        .layout.sidebar-disabled .main {
+            width: 100vw !important;
+        }
+
+        .layout.sidebar-disabled .tab-panel {
+            padding: 0 !important;
+            width: 100vw !important;
+        }
+
+        .layout.sidebar-disabled .network-panel {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0;
+            border: none;
+            max-width: none !important;
+        }
+
+        .layout.sidebar-disabled #networkCanvas {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+        }
+
+        /* Force canvas to take full iframe space */
+        canvas#networkCanvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px 24px 16px;
+            overflow-y: auto;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            display: block; /* Visible in standalone mode */
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 24px 0 16px;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        .sidebar h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar p {
+            margin: 0 0 20px;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 1rem;
+            margin: 0 0 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #1e293b;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5f5;
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        .search-hint {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .list-item strong {
+            font-weight: 600;
+        }
+
+        .cluster-item,
+        .relation-item {
+            border-left: 4px solid transparent;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .cluster-item:hover,
+        .relation-item:hover {
+            background: #e2e8f0;
+        }
+
+        .cluster-item.active,
+        .relation-item.active {
+            transform: translateX(4px);
+            background: #e2e8f0;
+        }
+
+        .cluster-item .meta,
+        .relation-item .meta {
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            padding: 16px 20px 0;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            border: none;
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab.active {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden when sidebar is disabled */
+        }
+
+        .sidebar-toggle:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .sidebar-toggle::before {
+            content: '☰';
+            margin-right: 6px;
+        }
+
+        .sidebar-toggle.collapsed::before {
+            content: '☰';
+        }
+
+        .tab-panel {
+            flex: 1;
+            display: none;
+            padding: 16px 20px;
+            overflow: hidden;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .network-panel {
+            height: calc(100vh - 74px);
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        #networkCanvas {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+        }
+
+        #networkCanvas {
+            cursor: grab;
+        }
+
+        #networkCanvas:active {
+            cursor: grabbing;
+        }
+
+        .selection-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .selection-card h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+
+        .selection-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .selection-card li {
+            margin-bottom: 4px;
+            color: #475569;
+        }
+
+        .table-container {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            height: calc(100vh - 90px);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            font-size: 0.75rem;
+            color: #0f172a;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.25);
+        }
+
+
+        /* Mobile/narrow iframe handling - when sidebar is disabled, use full space */
+        @media (max-width: 800px) {
+            .layout:not(.sidebar-disabled) {
+                grid-template-columns: 1fr;
+            }
+
+            .layout:not(.sidebar-disabled) .sidebar {
+                height: 280px;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .layout:not(.sidebar-disabled) .main {
+                height: calc(100vh - 280px);
+            }
+
+            /* When sidebar is disabled (iframe mode), ensure full viewport usage */
+            .layout.sidebar-disabled .main {
+                width: 100% !important;
+                height: 100vh !important;
+            }
+
+            .layout.sidebar-disabled .tab-panel {
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+            }
+
+            .layout.sidebar-disabled .network-panel {
+                width: 100% !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
+                border: none !important;
+                max-width: none !important;
+            }
+
+            .layout.sidebar-disabled #networkCanvas {
+                width: 100% !important;
+                height: 100vh !important;
+                max-width: none !important;
+            }
+
+            /* Ensure iframe canvas takes full space on mobile */
+            canvas#networkCanvas {
+                width: 100% !important;
+                height: 100% !important;
+                min-width: 100% !important;
+                min-height: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h1>Knowledge Graph Explorer</h1>
+            <p>Search, highlight, and inspect entities and relations to understand how the graph fits together.</p>
+            <div class="stats-grid" id="statsGrid"></div>
+            <div class="section">
+                <h2>Search</h2>
+                <input id="searchInput" class="search-input" type="text" placeholder="Search for entities or
+                    relations" />
+                <div class="search-hint">Matches are highlighted. Press Escape to clear.</div>
+            </div>
+            <div class="section" id="selectionSection">
+                <h2>Selection</h2>
+                <div id="selectionDetails" class="selection-card">Click a node or relation in the network to inspect
+                    details.</div>
+            </div>
+            <div class="section">
+                <h2>Entity Clusters</h2>
+                <div id="clusterList" class="list"></div>
+            </div>
+            <div class="section">
+                <h2>Top Entities</h2>
+                <div id="topEntities" class="list"></div>
+            </div>
+            <div class="section">
+                <h2>Top Relations</h2>
+                <div id="topRelations" class="list"></div>
+            </div>
+        </aside>
+        <main class="main">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar"></button>
+            <div class="tab-bar" style="padding-bottom: 10px; display: none;">
+                <button class="tab active" data-tab="network">Network</button>
+                <!-- <button class="tab" data-tab="relations">Relations</button>
+                <button class="tab" data-tab="insights">Insights</button> -->
+            </div>
+            <section id="network" class="tab-panel active">
+                <div class="network-panel">
+                    <canvas id="networkCanvas"></canvas>
+                </div>
+            </section>
+            <!-- <section id="relations" class="tab-panel">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Relation</th>
+                                <th>Object</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relationsTable"></tbody>
+                    </table>
+                </div>
+            </section>
+            <section id="insights" class="tab-panel">
+                <div class="table-container" style="padding: 20px;">
+                    <div id="insightsContent"></div>
+                </div>
+            </section> -->
+        </main>
+    </div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script id="viz-data" type="application/json">
+{
+  "nodes": [
+    {
+      "id": "act:Tool_OS",
+      "label": "act:Tool_OS",
+      "cluster": null,
+      "color": "#5692ec",
+      "degree": 1,
+      "indegree": 1,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "act:ToolCall_OS"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e1"
+        ],
+        "outgoing": []
+      }
+    },
+    {
+      "id": "act:ToolCall_OS",
+      "label": "act:ToolCall_OS",
+      "cluster": null,
+      "color": "#6ebb36",
+      "degree": 4,
+      "indegree": 1,
+      "outdegree": 3,
+      "isRepresentative": false,
+      "radius": 26,
+      "neighbors": [
+        "act:Tool_OS",
+        "mind:Intention_1",
+        "obs:Observation_OS_None",
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e15"
+        ],
+        "outgoing": [
+          "e0",
+          "e1",
+          "e20"
+        ]
+      }
+    },
+    {
+      "id": "mind:Goal_1",
+      "label": "mind:Goal_1",
+      "cluster": null,
+      "color": "#7f15d9",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "mind:Intention_1",
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e17",
+          "e18"
+        ]
+      }
+    },
+    {
+      "id": "mind:Intention_1",
+      "label": "mind:Intention_1",
+      "cluster": null,
+      "color": "#51bc2b",
+      "degree": 3,
+      "indegree": 1,
+      "outdegree": 2,
+      "isRepresentative": false,
+      "radius": 24,
+      "neighbors": [
+        "act:ToolCall_OS",
+        "mind:Goal_1",
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e18"
+        ],
+        "outgoing": [
+          "e15",
+          "e16"
+        ]
+      }
+    },
+    {
+      "id": "mind:Intention_2",
+      "label": "mind:Intention_2",
+      "cluster": null,
+      "color": "#e6794e",
+      "degree": 0,
+      "indegree": 0,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 18,
+      "neighbors": [],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    {
+      "id": "mind:Intention_3",
+      "label": "mind:Intention_3",
+      "cluster": null,
+      "color": "#686bf1",
+      "degree": 0,
+      "indegree": 0,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 18,
+      "neighbors": [],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    {
+      "id": "mind:Statement_1",
+      "label": "mind:Statement_1",
+      "cluster": null,
+      "color": "#89e33f",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e2"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_10",
+      "label": "mind:Statement_10",
+      "cluster": null,
+      "color": "#5bb832",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e3"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_11",
+      "label": "mind:Statement_11",
+      "cluster": null,
+      "color": "#e16bc1",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e4"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_12",
+      "label": "mind:Statement_12",
+      "cluster": null,
+      "color": "#6a3be2",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e5"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_13",
+      "label": "mind:Statement_13",
+      "cluster": null,
+      "color": "#bae412",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e6"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_2",
+      "label": "mind:Statement_2",
+      "cluster": null,
+      "color": "#e9326e",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e7"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_3",
+      "label": "mind:Statement_3",
+      "cluster": null,
+      "color": "#7256d9",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e8"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_4",
+      "label": "mind:Statement_4",
+      "cluster": null,
+      "color": "#cd2e6e",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e9"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_5",
+      "label": "mind:Statement_5",
+      "cluster": null,
+      "color": "#decd5d",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e10"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_6",
+      "label": "mind:Statement_6",
+      "cluster": null,
+      "color": "#d9695e",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e11"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_7",
+      "label": "mind:Statement_7",
+      "cluster": null,
+      "color": "#65e071",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e12"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_8",
+      "label": "mind:Statement_8",
+      "cluster": null,
+      "color": "#e6eb6f",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e13"
+        ]
+      }
+    },
+    {
+      "id": "mind:Statement_9",
+      "label": "mind:Statement_9",
+      "cluster": null,
+      "color": "#72e197",
+      "degree": 1,
+      "indegree": 0,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e14"
+        ]
+      }
+    },
+    {
+      "id": "obs:Observation_OS_None",
+      "label": "obs:Observation_OS_None",
+      "cluster": null,
+      "color": "#f2a36a",
+      "degree": 2,
+      "indegree": 1,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "act:ToolCall_OS",
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e20"
+        ],
+        "outgoing": [
+          "e19"
+        ]
+      }
+    },
+    {
+      "id": "state:State_std-007-bootstrap-00015",
+      "label": "state:State_std-007-bootstrap-00015",
+      "cluster": null,
+      "color": "#545ae0",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "trace:Agent_1416",
+        "trace:Step_1"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e21",
+          "e22"
+        ]
+      }
+    },
+    {
+      "id": "task:Task_Tstd-007-bootstrap-00015",
+      "label": "task:Task_Tstd-007-bootstrap-00015",
+      "cluster": null,
+      "color": "#58ef91",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "trace:Run_2532",
+        "trace:User_3180"
+      ],
+      "edgeIds": {
+        "incoming": [],
+        "outgoing": [
+          "e23",
+          "e24"
+        ]
+      }
+    },
+    {
+      "id": "trace:Agent_1416",
+      "label": "trace:Agent_1416",
+      "cluster": null,
+      "color": "#e56740",
+      "degree": 2,
+      "indegree": 2,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "state:State_std-007-bootstrap-00015",
+        "trace:Run_2532"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e22",
+          "e25"
+        ],
+        "outgoing": []
+      }
+    },
+    {
+      "id": "trace:Run_2532",
+      "label": "trace:Run_2532",
+      "cluster": null,
+      "color": "#7790ed",
+      "degree": 2,
+      "indegree": 1,
+      "outdegree": 1,
+      "isRepresentative": false,
+      "radius": 22,
+      "neighbors": [
+        "task:Task_Tstd-007-bootstrap-00015",
+        "trace:Agent_1416"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e23"
+        ],
+        "outgoing": [
+          "e25"
+        ]
+      }
+    },
+    {
+      "id": "trace:Step_1",
+      "label": "trace:Step_1",
+      "cluster": null,
+      "color": "#dd3a6c",
+      "degree": 18,
+      "indegree": 18,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 34,
+      "neighbors": [
+        "act:ToolCall_OS",
+        "mind:Goal_1",
+        "mind:Intention_1",
+        "mind:Statement_1",
+        "mind:Statement_10",
+        "mind:Statement_11",
+        "mind:Statement_12",
+        "mind:Statement_13",
+        "mind:Statement_2",
+        "mind:Statement_3",
+        "mind:Statement_4",
+        "mind:Statement_5",
+        "mind:Statement_6",
+        "mind:Statement_7",
+        "mind:Statement_8",
+        "mind:Statement_9",
+        "obs:Observation_OS_None",
+        "state:State_std-007-bootstrap-00015"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e0",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6",
+          "e7",
+          "e8",
+          "e9",
+          "e10",
+          "e11",
+          "e12",
+          "e13",
+          "e14",
+          "e16",
+          "e17",
+          "e19",
+          "e21"
+        ],
+        "outgoing": []
+      }
+    },
+    {
+      "id": "trace:User_3180",
+      "label": "trace:User_3180",
+      "cluster": null,
+      "color": "#d8db1f",
+      "degree": 1,
+      "indegree": 1,
+      "outdegree": 0,
+      "isRepresentative": false,
+      "radius": 20,
+      "neighbors": [
+        "task:Task_Tstd-007-bootstrap-00015"
+      ],
+      "edgeIds": {
+        "incoming": [
+          "e24"
+        ],
+        "outgoing": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "act:ToolCall_OS",
+      "target": "trace:Step_1",
+      "predicate": "act:usedInStep",
+      "cluster": null,
+      "color": "#ec9023",
+      "tooltip": "act:ToolCall_OS —act:usedInStep→ trace:Step_1"
+    },
+    {
+      "id": "e1",
+      "source": "act:ToolCall_OS",
+      "target": "act:Tool_OS",
+      "predicate": "act:usesTool",
+      "cluster": null,
+      "color": "#e9a84c",
+      "tooltip": "act:ToolCall_OS —act:usesTool→ act:Tool_OS"
+    },
+    {
+      "id": "e2",
+      "source": "mind:Statement_1",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_1 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e3",
+      "source": "mind:Statement_10",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_10 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e4",
+      "source": "mind:Statement_11",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_11 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e5",
+      "source": "mind:Statement_12",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_12 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e6",
+      "source": "mind:Statement_13",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_13 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e7",
+      "source": "mind:Statement_2",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_2 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e8",
+      "source": "mind:Statement_3",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_3 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e9",
+      "source": "mind:Statement_4",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_4 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e10",
+      "source": "mind:Statement_5",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_5 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e11",
+      "source": "mind:Statement_6",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_6 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e12",
+      "source": "mind:Statement_7",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_7 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e13",
+      "source": "mind:Statement_8",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_8 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e14",
+      "source": "mind:Statement_9",
+      "target": "trace:Step_1",
+      "predicate": "mind:assertedIn",
+      "cluster": null,
+      "color": "#2ce7e0",
+      "tooltip": "mind:Statement_9 —mind:assertedIn→ trace:Step_1"
+    },
+    {
+      "id": "e15",
+      "source": "mind:Intention_1",
+      "target": "act:ToolCall_OS",
+      "predicate": "mind:commitsToToolCall",
+      "cluster": null,
+      "color": "#e058e1",
+      "tooltip": "mind:Intention_1 —mind:commitsToToolCall→ act:ToolCall_OS"
+    },
+    {
+      "id": "e16",
+      "source": "mind:Intention_1",
+      "target": "trace:Step_1",
+      "predicate": "mind:expressedIn",
+      "cluster": null,
+      "color": "#42e4ee",
+      "tooltip": "mind:Intention_1 —mind:expressedIn→ trace:Step_1"
+    },
+    {
+      "id": "e17",
+      "source": "mind:Goal_1",
+      "target": "trace:Step_1",
+      "predicate": "mind:goalInStep",
+      "cluster": null,
+      "color": "#d3d13d",
+      "tooltip": "mind:Goal_1 —mind:goalInStep→ trace:Step_1"
+    },
+    {
+      "id": "e18",
+      "source": "mind:Goal_1",
+      "target": "mind:Intention_1",
+      "predicate": "mind:motivates",
+      "cluster": null,
+      "color": "#615aed",
+      "tooltip": "mind:Goal_1 —mind:motivates→ mind:Intention_1"
+    },
+    {
+      "id": "e19",
+      "source": "obs:Observation_OS_None",
+      "target": "trace:Step_1",
+      "predicate": "obs:observedIn",
+      "cluster": null,
+      "color": "#ebca17",
+      "tooltip": "obs:Observation_OS_None —obs:observedIn→ trace:Step_1"
+    },
+    {
+      "id": "e20",
+      "source": "act:ToolCall_OS",
+      "target": "obs:Observation_OS_None",
+      "predicate": "obs:results",
+      "cluster": null,
+      "color": "#9a1ee8",
+      "tooltip": "act:ToolCall_OS —obs:results→ obs:Observation_OS_None"
+    },
+    {
+      "id": "e21",
+      "source": "state:State_std-007-bootstrap-00015",
+      "target": "trace:Step_1",
+      "predicate": "state:activeIn",
+      "cluster": null,
+      "color": "#95e615",
+      "tooltip": "state:State_std-007-bootstrap-00015 —state:activeIn→ trace:Step_1"
+    },
+    {
+      "id": "e22",
+      "source": "state:State_std-007-bootstrap-00015",
+      "target": "trace:Agent_1416",
+      "predicate": "state:ownedBy",
+      "cluster": null,
+      "color": "#676ae6",
+      "tooltip": "state:State_std-007-bootstrap-00015 —state:ownedBy→ trace:Agent_1416"
+    },
+    {
+      "id": "e23",
+      "source": "task:Task_Tstd-007-bootstrap-00015",
+      "target": "trace:Run_2532",
+      "predicate": "task:handledByRun",
+      "cluster": null,
+      "color": "#57d863",
+      "tooltip": "task:Task_Tstd-007-bootstrap-00015 —task:handledByRun→ trace:Run_2532"
+    },
+    {
+      "id": "e24",
+      "source": "task:Task_Tstd-007-bootstrap-00015",
+      "target": "trace:User_3180",
+      "predicate": "task:requestedBy",
+      "cluster": null,
+      "color": "#c4bf35",
+      "tooltip": "task:Task_Tstd-007-bootstrap-00015 —task:requestedBy→ trace:User_3180"
+    },
+    {
+      "id": "e25",
+      "source": "trace:Run_2532",
+      "target": "trace:Agent_1416",
+      "predicate": "trace:performedBy",
+      "cluster": null,
+      "color": "#ab39e6",
+      "tooltip": "trace:Run_2532 —trace:performedBy→ trace:Agent_1416"
+    }
+  ],
+  "clusters": [],
+  "edgeClusters": [],
+  "topEntities": [
+    {
+      "label": "trace:Step_1",
+      "degree": 18,
+      "indegree": 18,
+      "outdegree": 0,
+      "cluster": null
+    },
+    {
+      "label": "act:ToolCall_OS",
+      "degree": 4,
+      "indegree": 1,
+      "outdegree": 3,
+      "cluster": null
+    },
+    {
+      "label": "mind:Intention_1",
+      "degree": 3,
+      "indegree": 1,
+      "outdegree": 2,
+      "cluster": null
+    },
+    {
+      "label": "mind:Goal_1",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "cluster": null
+    },
+    {
+      "label": "obs:Observation_OS_None",
+      "degree": 2,
+      "indegree": 1,
+      "outdegree": 1,
+      "cluster": null
+    },
+    {
+      "label": "state:State_std-007-bootstrap-00015",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "cluster": null
+    },
+    {
+      "label": "task:Task_Tstd-007-bootstrap-00015",
+      "degree": 2,
+      "indegree": 0,
+      "outdegree": 2,
+      "cluster": null
+    },
+    {
+      "label": "trace:Agent_1416",
+      "degree": 2,
+      "indegree": 2,
+      "outdegree": 0,
+      "cluster": null
+    },
+    {
+      "label": "trace:Run_2532",
+      "degree": 2,
+      "indegree": 1,
+      "outdegree": 1,
+      "cluster": null
+    },
+    {
+      "label": "act:Tool_OS",
+      "degree": 1,
+      "indegree": 1,
+      "outdegree": 0,
+      "cluster": null
+    }
+  ],
+  "topRelations": [
+    {
+      "predicate": "mind:assertedIn",
+      "count": 13,
+      "cluster": null,
+      "color": "#2ce7e0"
+    },
+    {
+      "predicate": "act:usedInStep",
+      "count": 1,
+      "cluster": null,
+      "color": "#ec9023"
+    },
+    {
+      "predicate": "act:usesTool",
+      "count": 1,
+      "cluster": null,
+      "color": "#e9a84c"
+    },
+    {
+      "predicate": "mind:commitsToToolCall",
+      "count": 1,
+      "cluster": null,
+      "color": "#e058e1"
+    },
+    {
+      "predicate": "mind:expressedIn",
+      "count": 1,
+      "cluster": null,
+      "color": "#42e4ee"
+    },
+    {
+      "predicate": "mind:goalInStep",
+      "count": 1,
+      "cluster": null,
+      "color": "#d3d13d"
+    },
+    {
+      "predicate": "mind:motivates",
+      "count": 1,
+      "cluster": null,
+      "color": "#615aed"
+    },
+    {
+      "predicate": "obs:observedIn",
+      "count": 1,
+      "cluster": null,
+      "color": "#ebca17"
+    },
+    {
+      "predicate": "obs:results",
+      "count": 1,
+      "cluster": null,
+      "color": "#9a1ee8"
+    },
+    {
+      "predicate": "state:activeIn",
+      "count": 1,
+      "cluster": null,
+      "color": "#95e615"
+    }
+  ],
+  "stats": {
+    "entities": 26,
+    "relations": 26,
+    "relationTypes": 14,
+    "entityClusters": 0,
+    "edgeClusters": 0,
+    "isolatedEntities": 2,
+    "components": 3,
+    "averageDegree": 2.0,
+    "density": 0.04
+  },
+  "isolatedEntities": [
+    "mind:Intention_2",
+    "mind:Intention_3"
+  ],
+  "components": [
+    {
+      "size": 24,
+      "members": [
+        "act:Tool_OS",
+        "act:ToolCall_OS",
+        "mind:Goal_1",
+        "mind:Intention_1",
+        "mind:Statement_1",
+        "mind:Statement_10",
+        "mind:Statement_11",
+        "mind:Statement_12",
+        "mind:Statement_13",
+        "mind:Statement_2",
+        "mind:Statement_3",
+        "mind:Statement_4",
+        "mind:Statement_5",
+        "mind:Statement_6",
+        "mind:Statement_7",
+        "mind:Statement_8",
+        "mind:Statement_9",
+        "obs:Observation_OS_None",
+        "state:State_std-007-bootstrap-00015",
+        "task:Task_Tstd-007-bootstrap-00015",
+        "trace:Agent_1416",
+        "trace:Run_2532",
+        "trace:Step_1",
+        "trace:User_3180"
+      ]
+    },
+    {
+      "size": 1,
+      "members": [
+        "mind:Intention_2"
+      ]
+    },
+    {
+      "size": 1,
+      "members": [
+        "mind:Intention_3"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "source": "act:ToolCall_OS",
+      "predicate": "act:usedInStep",
+      "target": "trace:Step_1",
+      "edgeId": "e0",
+      "color": "#ec9023"
+    },
+    {
+      "source": "act:ToolCall_OS",
+      "predicate": "act:usesTool",
+      "target": "act:Tool_OS",
+      "edgeId": "e1",
+      "color": "#e9a84c"
+    },
+    {
+      "source": "mind:Statement_1",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e2",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_10",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e3",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_11",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e4",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_12",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e5",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_13",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e6",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_2",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e7",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_3",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e8",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_4",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e9",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_5",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e10",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_6",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e11",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_7",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e12",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_8",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e13",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Statement_9",
+      "predicate": "mind:assertedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e14",
+      "color": "#2ce7e0"
+    },
+    {
+      "source": "mind:Intention_1",
+      "predicate": "mind:commitsToToolCall",
+      "target": "act:ToolCall_OS",
+      "edgeId": "e15",
+      "color": "#e058e1"
+    },
+    {
+      "source": "mind:Intention_1",
+      "predicate": "mind:expressedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e16",
+      "color": "#42e4ee"
+    },
+    {
+      "source": "mind:Goal_1",
+      "predicate": "mind:goalInStep",
+      "target": "trace:Step_1",
+      "edgeId": "e17",
+      "color": "#d3d13d"
+    },
+    {
+      "source": "mind:Goal_1",
+      "predicate": "mind:motivates",
+      "target": "mind:Intention_1",
+      "edgeId": "e18",
+      "color": "#615aed"
+    },
+    {
+      "source": "obs:Observation_OS_None",
+      "predicate": "obs:observedIn",
+      "target": "trace:Step_1",
+      "edgeId": "e19",
+      "color": "#ebca17"
+    },
+    {
+      "source": "act:ToolCall_OS",
+      "predicate": "obs:results",
+      "target": "obs:Observation_OS_None",
+      "edgeId": "e20",
+      "color": "#9a1ee8"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00015",
+      "predicate": "state:activeIn",
+      "target": "trace:Step_1",
+      "edgeId": "e21",
+      "color": "#95e615"
+    },
+    {
+      "source": "state:State_std-007-bootstrap-00015",
+      "predicate": "state:ownedBy",
+      "target": "trace:Agent_1416",
+      "edgeId": "e22",
+      "color": "#676ae6"
+    },
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00015",
+      "predicate": "task:handledByRun",
+      "target": "trace:Run_2532",
+      "edgeId": "e23",
+      "color": "#57d863"
+    },
+    {
+      "source": "task:Task_Tstd-007-bootstrap-00015",
+      "predicate": "task:requestedBy",
+      "target": "trace:User_3180",
+      "edgeId": "e24",
+      "color": "#c4bf35"
+    },
+    {
+      "source": "trace:Run_2532",
+      "predicate": "trace:performedBy",
+      "target": "trace:Agent_1416",
+      "edgeId": "e25",
+      "color": "#ab39e6"
+    }
+  ]
+}
+    </script>
+    <script>
+        (function () {
+            console.log('[iframe] Script starting - mobile check:', window.innerWidth <= 768);
+            console.log('[iframe] User agent:', navigator.userAgent);
+
+            const dataElement = document.getElementById('viz-data');
+            if (!dataElement) {
+                console.error('[iframe] viz-data element not found!');
+                return;
+            }
+
+            let vizData;
+            try {
+                vizData = JSON.parse(dataElement.textContent);
+                console.log('[iframe] Data parsed successfully:', vizData.nodes?.length, 'nodes');
+            } catch (e) {
+                console.error('[iframe] Failed to parse data:', e);
+                return;
+            }
+
+            const state = {
+                activeElement: null,
+                focusCluster: null,
+                focusPredicate: null,
+                searchTerm: '',
+                sidebarCollapsed: false,
+                sidebarDisabled: false
+            };
+
+            const nodeById = Object.fromEntries(vizData.nodes.map(node => [node.id, node]));
+            const edgeById = Object.fromEntries(vizData.edges.map(edge => [edge.id, edge]));
+            const clusterById = Object.fromEntries(vizData.clusters.map(cluster => [cluster.id, cluster]));
+            const edgesByPredicate = {};
+            vizData.edges.forEach(edge => {
+                if (!edgesByPredicate[edge.predicate]) {
+                    edgesByPredicate[edge.predicate] = [];
+                }
+                edgesByPredicate[edge.predicate].push(edge.id);
+            });
+
+            const nodesByCluster = {};
+            vizData.clusters.forEach(cluster => {
+                cluster.members.forEach(member => {
+                    if (!nodesByCluster[cluster.id]) {
+                        nodesByCluster[cluster.id] = new Set();
+                    }
+                    nodesByCluster[cluster.id].add(member);
+                });
+            });
+
+            function renderStats() {
+                const grid = document.getElementById('statsGrid');
+                const stats = vizData.stats;
+                const entries = [
+                    { label: 'Entities', value: stats.entities },
+                    { label: 'Relations', value: stats.relations },
+                    { label: 'Relation types', value: stats.relationTypes },
+                    { label: 'Entity clusters', value: stats.entityClusters },
+                    { label: 'Edge clusters', value: stats.edgeClusters },
+                    { label: 'Isolated entities', value: stats.isolatedEntities },
+                    { label: 'Components', value: stats.components },
+                    { label: 'Average degree', value: stats.averageDegree }
+                ];
+                grid.innerHTML = entries
+                    .map(entry => `
+                        <div class="stat-card">
+                            <div class="stat-value">${entry.value}</div>
+                            <div>${entry.label}</div>
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            function renderTopLists() {
+                const topEntitiesContainer = document.getElementById('topEntities');
+                const topRelationsContainer = document.getElementById('topRelations');
+
+                const entityItems = vizData.topEntities.map(item => {
+                    const clusterLabel = item.cluster ? `${item.cluster}` : 'Unclustered';
+                    return `
+                        <div class="list-item">
+                            <div>
+                                <strong>${item.label}</strong>
+                                <div class="meta">Cluster: ${clusterLabel}</div>
+                            </div>
+                            <div>${item.degree}</div>
+                        </div>
+                    `;
+                });
+                topEntitiesContainer.innerHTML = entityItems.join('') || '<div class="meta">No entities</div>';
+
+                const relationItems = vizData.topRelations.map(item => `
+                    <div class="list-item relation-item" data-predicate="${item.predicate}">
+                        <div>
+                            <strong>${item.predicate}</strong>
+                            <div class="meta">${item.count} relations</div>
+                        </div>
+                        <div class="pill" style="background: ${item.color}1a; border: 1px solid ${item.color};">${item.count}</div>
+                    </div>
+                `);
+                topRelationsContainer.innerHTML = relationItems.join('') || '<div class="meta">No relations</div>';
+            }
+
+            function renderClusters() {
+                const container = document.getElementById('clusterList');
+                if (!vizData.clusters.length) {
+                    container.innerHTML = '<div class="meta">No cluster information provided.</div>';
+                    return;
+                }
+                container.innerHTML = vizData.clusters
+                    .map(cluster => `
+                        <button class="list-item cluster-item" data-cluster="${cluster.id}" style="border-left-color: ${cluster.color};">
+                            <div>
+                                <strong>${cluster.label}</strong>
+                                <div class="meta">${cluster.size} members</div>
+                            </div>
+                            <span class="legend-swatch" style="background: ${cluster.color};"></span>
+                        </button>
+                    `)
+                    .join('');
+            }
+
+            // function renderRelationsTable() {
+            //     const tbody = document.getElementById('relationsTable');
+            //     tbody.innerHTML = vizData.relations
+            //         .map(rel => `
+            //             <tr data-edge="${rel.edgeId}">
+            //                 <td>${rel.source}</td>
+            //                 <td><span class="pill" style="border: 1px solid ${rel.color}; background: ${rel.color}1a;">${rel.predicate}</span></td>
+            //                 <td>${rel.target}</td>
+            //             </tr>
+            //         `)
+            //         .join('');
+            // }
+
+            // function renderInsights() {
+            //     const insights = document.getElementById('insightsContent');
+            //     const clusters = vizData.clusters
+            //         .map(cluster => `
+            //             <div class="list-item" style="border-left: 4px solid ${cluster.color};">
+            //                 <div>
+            //                     <strong>${cluster.label}</strong>
+            //                     <div class="meta">Members: ${cluster.members.join(', ')}</div>
+            //                 </div>
+            //                 <div>${cluster.size}</div>
+            //             </div>
+            //         `)
+            //         .join('');
+
+            //     const components = vizData.components
+            //         .map((component, index) => `
+            //             <div class="list-item">
+            //                 <div>
+            //                     <strong>Component ${index + 1}</strong>
+            //                     <div class="meta">${component.members.join(', ')}</div>
+            //                 </div>
+            //                 <div>${component.size}</div>
+            //             </div>
+            //         `)
+            //         .join('');
+
+            //     const isolates = vizData.isolatedEntities.length
+            //         ? vizData.isolatedEntities.join(', ')
+            //         : 'None';
+
+            //     insights.innerHTML = `
+            //         <div class="section">
+            //             <h2>Clusters</h2>
+            //             <div class="list">${clusters || '<div class="meta">No clusters</div>'}</div>
+            //         </div>
+            //         <div class="section">
+            //             <h2>Connected components</h2>
+            //             <div class="list">${components || '<div class="meta">Single connected component</div>'}</div>
+            //         </div>
+            //         <div class="section">
+            //             <h2>Isolated entities</h2>
+            //             <div class="meta">${isolates}</div>
+            //         </div>
+            //     `;
+            // }
+
+            function setActiveElement(element) {
+                state.activeElement = element;
+                renderSelectionDetails();
+                updateHighlights();
+
+                // Notify parent about selection change
+                if (window.parent !== window && state.sidebarDisabled) {
+                    const selection = element ? {
+                        type: element.type,
+                        id: element.id,
+                        ...getElementDetails(element)
+                    } : null;
+                    window.parent.postMessage({
+                        type: 'selectionChanged',
+                        selection: selection
+                    }, '*');
+                }
+            }
+
+            function getElementDetails(element) {
+                if (!element) return {};
+
+                if (element.type === 'node') {
+                    const node = nodeById[element.id];
+                    return {
+                        label: node.label,
+                        cluster: node.cluster,
+                        degree: node.degree,
+                        indegree: node.indegree,
+                        outdegree: node.outdegree,
+                        neighbors: node.neighbors
+                    };
+                } else if (element.type === 'edge') {
+                    const edge = edgeById[element.id];
+                    return {
+                        source: edge.source,
+                        target: edge.target,
+                        predicate: edge.predicate,
+                        cluster: edge.cluster
+                    };
+                }
+                return {};
+            }
+
+            function clearActiveElement() {
+                state.activeElement = null;
+                renderSelectionDetails();
+                updateHighlights();
+            }
+
+            function renderSelectionDetails() {
+                const panel = document.getElementById('selectionDetails');
+                const active = state.activeElement;
+                if (!active) {
+                    panel.innerHTML = 'Click a node or relation in the network to inspect details.';
+                    return;
+                }
+
+                if (active.type === 'node') {
+                    const node = nodeById[active.id];
+                    const cluster = node.cluster ? `Cluster: ${node.cluster}` : 'Unclustered';
+                    const neighbors = node.neighbors.length ? node.neighbors.join(', ') : 'None';
+                    panel.innerHTML = `
+                        <h3>${node.label}</h3>
+                        <ul>
+                            <li>${cluster}</li>
+                            <li>Total degree: ${node.degree}</li>
+                            <li>Outgoing: ${node.outdegree}</li>
+                            <li>Incoming: ${node.indegree}</li>
+                            <li>Neighbors: ${neighbors}</li>
+                        </ul>
+                    `;
+                } else if (active.type === 'edge') {
+                    const edge = edgeById[active.id];
+                    const cluster = edge.cluster ? `Cluster: ${edge.cluster}` : 'Unclustered';
+                    panel.innerHTML = `
+                        <h3>${edge.source} → ${edge.target}</h3>
+                        <ul>
+                            <li>Relation: ${edge.predicate}</li>
+                            <li>${cluster}</li>
+                        </ul>
+                    `;
+                }
+            }
+
+            function toggleClusterFocus(clusterId) {
+                if (state.focusCluster === clusterId) {
+                    state.focusCluster = null;
+                } else {
+                    state.focusCluster = clusterId;
+                }
+                updateActiveButtons();
+                updateHighlights();
+            }
+
+            function togglePredicateFocus(predicate) {
+                if (state.focusPredicate === predicate) {
+                    state.focusPredicate = null;
+                } else {
+                    state.focusPredicate = predicate;
+                }
+                updateActiveButtons();
+                updateHighlights();
+            }
+
+            function toggleEntityFocus(id) {
+                if (state.activeElement?.id === id) {
+                    setActiveElement(null);
+                } else {
+                    setActiveElement({ type: 'node', id: id });
+                }
+            }
+
+            function updateActiveButtons() {
+                document.querySelectorAll('.cluster-item').forEach(item => {
+                    const clusterId = item.getAttribute('data-cluster');
+                    item.classList.toggle('active', state.focusCluster === clusterId);
+                });
+                document.querySelectorAll('.relation-item').forEach(item => {
+                    const predicate = item.getAttribute('data-predicate');
+                    item.classList.toggle('active', state.focusPredicate === predicate);
+                });
+            }
+
+            // Canvas-based network visualization
+            let canvas, ctx, transform, simulation;
+            let nodes, edges;
+            let highlightedNodes = new Set();
+            let highlightedEdges = new Set();
+            let isFiltering = false;
+
+            function createNetwork() {
+                console.log('[iframe] createNetwork starting...');
+
+                if (typeof d3 === 'undefined') {
+                    console.error('[iframe] D3.js not loaded!');
+                    return;
+                }
+                console.log('[iframe] D3.js version:', d3.version);
+
+                canvas = document.getElementById('networkCanvas');
+                if (!canvas) {
+                    console.error('[iframe] Canvas element not found!');
+                    return;
+                }
+
+                ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('[iframe] Canvas context not available!');
+                    return;
+                }
+
+                // Force a layout recalculation to ensure proper sizing
+                canvas.offsetHeight; // Trigger reflow
+
+                // Set canvas size with device pixel ratio for crisp rendering
+                const rect = canvas.getBoundingClientRect();
+                console.log('[iframe] Canvas rect:', rect.width, 'x', rect.height);
+
+                // Ensure minimum size for mobile/narrow viewports
+                const width = Math.max(rect.width, 320);
+                const height = Math.max(rect.height, 200);
+
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // Initialize transform for zooming/panning
+                transform = d3.zoomIdentity;
+
+                // Clone data for simulation
+                nodes = vizData.nodes.map(node => ({ ...node }));
+                edges = vizData.edges.map(edge => ({ ...edge }));
+
+                // Mouse interaction handling
+                let draggedNode = null;
+                let isDraggingNode = false;
+                let mouseX, mouseY;
+                let mouseDownPos = null;
+                let isMouseDown = false;
+                const DRAG_THRESHOLD = 10; // pixels - minimum movement to start dragging
+
+                // Create D3 force simulation
+                simulation = d3
+                    .forceSimulation(nodes)
+                    .force('link', d3.forceLink(edges).id(d => d.id).distance(120).strength(0.3))
+                    .force('charge', d3.forceManyBody().strength(-280))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collision', d3.forceCollide().radius(d => d.radius + 12));
+
+                // Set up zoom behavior with conditional activation
+                const zoom = d3.zoom()
+                    .scaleExtent([0.25, 3])
+                    .on('zoom', (event) => {
+                        // Apply zoom only if not dragging a node
+                        if (!isDraggingNode) {
+                            transform = event.transform;
+                            render();
+                        }
+                    })
+                    .filter((event) => {
+                        // Allow zoom with mouse wheel or when no node under cursor
+                        if (event.type === 'wheel') return true;
+                        if (event.type === 'mousedown' && event.button === 0) {
+                            const pos = getMousePos(event);
+                            const node = findNode(pos.x, pos.y);
+                            return !node;
+                        }
+                        return true;
+                    });
+
+                d3.select(canvas).call(zoom);
+
+                // Set initial zoom level
+                zoom.scaleTo(d3.select(canvas), 0.5);
+
+                function getMousePos(event) {
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: (event.clientX - rect.left - transform.x) / transform.k,
+                        y: (event.clientY - rect.top - transform.y) / transform.k
+                    };
+                }
+
+                function findNode(x, y) {
+                    for (let i = nodes.length - 1; i >= 0; i--) {
+                        const node = nodes[i];
+                        const dx = x - node.x;
+                        const dy = y - node.y;
+                        if (dx * dx + dy * dy < node.radius * node.radius) {
+                            return node;
+                        }
+                    }
+                    return null;
+                }
+
+                function findEdge(x, y) {
+                    for (let i = edges.length - 1; i >= 0; i--) {
+                        const edge = edges[i];
+                        if (!edge.source || !edge.target) continue;
+
+                        // Check if click is near the edge line
+                        const dx = edge.target.x - edge.source.x;
+                        const dy = edge.target.y - edge.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) continue;
+
+                        const dot = ((x - edge.source.x) * dx + (y - edge.source.y) * dy) / (length * length);
+                        if (dot < 0 || dot > 1) continue;
+
+                        const projX = edge.source.x + dot * dx;
+                        const projY = edge.source.y + dot * dy;
+                        const distSq = (x - projX) * (x - projX) + (y - projY) * (y - projY);
+
+                        if (distSq < 25) { // 5px threshold
+                            return edge;
+                        }
+                    }
+                    return null;
+                }
+
+                // Prevent context menu on right click
+                canvas.addEventListener('contextmenu', (event) => {
+                    event.preventDefault();
+                    return false;
+                });
+
+                canvas.addEventListener('mousedown', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+
+                    const pos = getMousePos(event);
+                    mouseX = pos.x;
+                    mouseY = pos.y;
+                    mouseDownPos = { x: pos.x, y: pos.y };
+                    isMouseDown = true;
+                    draggedNode = findNode(pos.x, pos.y);
+
+                    if (draggedNode) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        // Don't start dragging immediately - wait for movement
+                        canvas.style.cursor = 'grabbing';
+                    }
+                });
+
+                canvas.addEventListener('mousemove', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+                    const pos = getMousePos(event);
+
+                    if (draggedNode && isDraggingNode) {
+                        // Already dragging - continue moving the node
+                        draggedNode.fx = pos.x;
+                        draggedNode.fy = pos.y;
+                    } else if (draggedNode && isMouseDown && mouseDownPos) {
+                        // Check if mouse moved enough to start dragging
+                        const dx = pos.x - mouseDownPos.x;
+                        const dy = pos.y - mouseDownPos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > DRAG_THRESHOLD) {
+                            // Start dragging
+                            isDraggingNode = true;
+                            simulation.alphaTarget(0.1).restart();
+                            draggedNode.fx = draggedNode.x;
+                            draggedNode.fy = draggedNode.y;
+                        }
+                    } else if (!isDraggingNode && !isMouseDown) {
+                        // Update cursor based on what's under mouse
+                        const node = findNode(pos.x, pos.y);
+                        const edge = findEdge(pos.x, pos.y);
+                        canvas.style.cursor = (node || edge) ? 'pointer' : 'grab';
+                    }
+                });
+
+                canvas.addEventListener('mouseup', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+
+                    if (draggedNode) {
+                        if (isDraggingNode) {
+                            // Was actually dragging - stop the drag
+                            simulation.alphaTarget(0);
+                            draggedNode.fx = null;
+                            draggedNode.fy = null;
+                        }
+                        // Reset node reference
+                        draggedNode = null;
+                        canvas.style.cursor = 'grab';
+                    }
+
+                    // Reset all mouse states
+                    isMouseDown = false;
+                    isDraggingNode = false;
+                    mouseDownPos = null;
+                });
+
+                canvas.addEventListener('click', (event) => {
+                    // Only handle click if we weren't dragging
+                    if (isDraggingNode) return;
+
+                    const pos = getMousePos(event);
+                    const node = findNode(pos.x, pos.y);
+                    const edge = findEdge(pos.x, pos.y);
+
+                    if (node) {
+                        setActiveElement({ type: 'node', id: node.id });
+                    } else if (edge) {
+                        setActiveElement({ type: 'edge', id: edge.id });
+                    } else {
+                        clearActiveElement();
+                    }
+                });
+
+                // Animation loop
+                simulation.on('tick', () => {
+                    // Avoid nodes to be re-rendered all time, just re-render when moving
+                    if (isDraggingNode) {
+                        render();
+                    }
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', resizeCanvas);
+
+                render();
+            }
+
+            function resizeCanvas() {
+                if (!canvas || !ctx) return;
+
+                // Force canvas to take full container size
+                if (state.sidebarDisabled) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                console.log('Canvas resize - rect:', rect.width, 'x', rect.height);
+
+                // Ensure minimum size for mobile
+                const width = Math.max(rect.width, 320);
+                const height = Math.max(rect.height, 200);
+
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // Update simulation center
+                if (simulation) {
+                    simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    simulation.alpha(0.3).restart();
+                }
+
+                render();
+            }
+
+
+            function render() {
+                if (!ctx || !canvas) return;
+
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio || 1),
+                    canvas.height / (window.devicePixelRatio || 1));
+
+                // Apply transform
+                ctx.save();
+                ctx.translate(transform.x, transform.y);
+                ctx.scale(transform.k, transform.k);
+
+                // Set text properties
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '12px Inter, system-ui, sans-serif';
+
+                // Draw edges first
+                edges.forEach(edge => {
+                    if (!edge.source || !edge.target) return;
+
+                    const isHighlighted = highlightedEdges.has(edge.id);
+                    const isDimmed = isFiltering && !isHighlighted;
+
+                    // Calculate edge endpoints accounting for node radius
+                    const dx = edge.target.x - edge.source.x;
+                    const dy = edge.target.y - edge.source.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const normX = dx / distance;
+                    const normY = dy / distance;
+
+                    const sourcePadding = edge.source.radius + 2;
+                    const targetPadding = edge.target.radius + 8;
+                    const sourceX = edge.source.x + normX * sourcePadding;
+                    const sourceY = edge.source.y + normY * sourcePadding;
+                    const targetX = edge.target.x - normX * targetPadding;
+                    const targetY = edge.target.y - normY * targetPadding;
+
+                    // Draw edge line
+                    ctx.strokeStyle = edge.color;
+                    ctx.globalAlpha = isDimmed ? 0.15 : (isHighlighted ? 1.0 : 0.55);
+                    ctx.lineWidth = 1.4;
+                    ctx.beginPath();
+                    ctx.moveTo(sourceX, sourceY);
+                    ctx.lineTo(targetX, targetY);
+                    ctx.stroke();
+
+                    // Draw arrowhead
+                    const arrowLength = 12;
+                    const arrowWidth = 24;
+                    const angle = Math.atan2(dy, dx);
+
+                    ctx.fillStyle = edge.color;
+                    ctx.beginPath();
+                    ctx.moveTo(targetX, targetY);
+                    ctx.lineTo(
+                        targetX - arrowLength * Math.cos(angle - arrowWidth * Math.PI / 180),
+                        targetY - arrowLength * Math.sin(angle - arrowWidth * Math.PI / 180)
+                    );
+                    ctx.lineTo(
+                        targetX - arrowLength * Math.cos(angle + arrowWidth * Math.PI / 180),
+                        targetY - arrowLength * Math.sin(angle + arrowWidth * Math.PI / 180)
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw edge label if zoom level is appropriate
+                    if (transform.k > 0.8) {
+                        const labelX = (sourceX + targetX) / 2;
+                        const labelY = (sourceY + targetY) / 2;
+
+                        ctx.fillStyle = isDimmed ? 'rgba(30, 41, 59, 0.15)' : 'rgba(30, 41, 59, 0.8)';
+                        ctx.font = '10px Inter, system-ui, sans-serif';
+                        ctx.fillText(edge.predicate, labelX, labelY);
+                    }
+                });
+
+                // Draw nodes
+                nodes.forEach(node => {
+                    const isHighlighted = highlightedNodes.has(node.id);
+                    const isDimmed = isFiltering && !isHighlighted;
+
+                    // Draw node circle
+                    ctx.fillStyle = node.color;
+                    ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // Draw node border
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = isHighlighted ? 2.4 : 1.2;
+                    ctx.stroke();
+
+                    // Draw node label
+                    if (transform.k > 0.5) {
+                        ctx.fillStyle = isDimmed ? 'rgba(15, 23, 42, 0.15)' : '#0f172a';
+                        ctx.font = '12px Inter, system-ui, sans-serif';
+                        ctx.fillText(node.label, node.x, node.y + node.radius + 14);
+                    }
+                });
+
+                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
+
+            function updateHighlights() {
+                // Clear previous highlights
+                highlightedNodes.clear();
+                highlightedEdges.clear();
+                isFiltering = false;
+
+                const addNode = id => {
+                    if (id) {
+                        highlightedNodes.add(id);
+                    }
+                };
+                const addEdge = id => {
+                    if (id) {
+                        highlightedEdges.add(id);
+                    }
+                };
+
+                if (state.activeElement) {
+                    isFiltering = true;
+                    if (state.activeElement.type === 'node') {
+                        const node = nodeById[state.activeElement.id];
+                        addNode(node.id);
+                        node.neighbors.forEach(addNode);
+                        (node.edgeIds.outgoing || []).forEach(addEdge);
+                        (node.edgeIds.incoming || []).forEach(addEdge);
+                    } else if (state.activeElement.type === 'edge') {
+                        const edge = edgeById[state.activeElement.id];
+                        addEdge(edge.id);
+                        addNode(edge.source);
+                        addNode(edge.target);
+                    }
+                }
+
+                if (state.focusCluster && nodesByCluster[state.focusCluster]) {
+                    isFiltering = true;
+                    nodesByCluster[state.focusCluster].forEach(addNode);
+                    vizData.edges.forEach(edge => {
+                        if (
+                            nodesByCluster[state.focusCluster].has(edge.source) &&
+                            nodesByCluster[state.focusCluster].has(edge.target)
+                        ) {
+                            addEdge(edge.id);
+                        }
+                    });
+                }
+
+                if (state.focusPredicate && edgesByPredicate[state.focusPredicate]) {
+                    isFiltering = true;
+                    edgesByPredicate[state.focusPredicate].forEach(edgeId => {
+                        addEdge(edgeId);
+                        const edge = edgeById[edgeId];
+                        addNode(edge.source);
+                        addNode(edge.target);
+                    });
+                }
+
+                if (state.searchTerm) {
+                    const term = state.searchTerm.toLowerCase();
+                    isFiltering = true;
+                    vizData.nodes.forEach(node => {
+                        if (node.label.toLowerCase().includes(term)) {
+                            addNode(node.id);
+                            node.neighbors.forEach(addNode);
+                        }
+                    });
+                    vizData.edges.forEach(edge => {
+                        if (edge.predicate.toLowerCase().includes(term)) {
+                            addEdge(edge.id);
+                            addNode(edge.source);
+                            addNode(edge.target);
+                        }
+                    });
+                }
+
+                // Trigger re-render with updated highlights
+                render();
+            }
+
+            function toggleSidebar() {
+                if (state.sidebarDisabled) return;
+
+                state.sidebarCollapsed = !state.sidebarCollapsed;
+                const layout = document.querySelector('.layout');
+                const sidebar = document.querySelector('.sidebar');
+                const toggleButton = document.getElementById('sidebarToggle');
+
+                layout.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+                sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+                toggleButton.classList.toggle('collapsed', state.sidebarCollapsed);
+
+                // Trigger canvas resize when sidebar toggles
+                setTimeout(() => {
+                    resizeCanvas();
+                }, 300); // Wait for transition to complete
+            }
+
+            function disableSidebar() {
+                state.sidebarDisabled = true;
+
+                const layout = document.querySelector('.layout');
+                const sidebar = document.querySelector('.sidebar');
+                const toggleButton = document.getElementById('sidebarToggle');
+                const main = document.querySelector('.main');
+                const tabPanel = document.querySelector('.tab-panel');
+                const networkPanel = document.querySelector('.network-panel');
+
+                layout.classList.add('sidebar-disabled');
+                sidebar.style.display = 'none';
+                toggleButton.style.display = 'none';
+
+                // Force styles directly for iframe context
+                main.style.width = '100%';
+                main.style.height = '100vh';
+                tabPanel.style.padding = '0';
+                tabPanel.style.width = '100%';
+                tabPanel.style.height = '100vh';
+                networkPanel.style.width = '100%';
+                networkPanel.style.height = '100vh';
+                networkPanel.style.borderRadius = '0';
+                networkPanel.style.border = 'none';
+
+                console.log('Sidebar disabled, forcing full width styles');
+
+                // Multiple resize attempts with forced reflow
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('First resize attempt after 200ms');
+                    resizeCanvas();
+                }, 200);
+
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('Second resize attempt after 500ms');
+                    resizeCanvas();
+                }, 500);
+
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('Final resize attempt after 800ms');
+                    resizeCanvas();
+                }, 800);
+
+                // Notify parent about graph data
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'graphDataReady',
+                        data: vizData
+                    }, '*');
+                }
+            }
+
+            function bindInteractions() {
+                document.querySelectorAll('.cluster-item').forEach(item => {
+                    item.addEventListener('click', () => toggleClusterFocus(item.getAttribute('data-cluster')));
+                });
+
+                document.querySelectorAll('.relation-item').forEach(item => {
+                    item.addEventListener('click', () => togglePredicateFocus(item.getAttribute('data-predicate')));
+                });
+
+                // document.getElementById('relationsTable').addEventListener('click', event => {
+                //     const row = event.target.closest('tr');
+                //     if (!row) {
+                //         return;
+                //     }
+                //     const edgeId = row.getAttribute('data-edge');
+                //     if (edgeId) {
+                //         setActiveElement({ type: 'edge', id: edgeId });
+                //     }
+                // });
+
+                const searchInput = document.getElementById('searchInput');
+                searchInput.addEventListener('input', () => {
+                    state.searchTerm = searchInput.value.trim();
+                    updateHighlights();
+
+                    // Notify parent about search change
+                    if (window.parent !== window && state.sidebarDisabled) {
+                        window.parent.postMessage({
+                            type: 'searchChanged',
+                            searchTerm: state.searchTerm
+                        }, '*');
+                    }
+                });
+                searchInput.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') {
+                        searchInput.value = '';
+                        state.searchTerm = '';
+                        updateHighlights();
+                    }
+                });
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', event => {
+                        const target = event.currentTarget;
+                        document.querySelectorAll('.tab').forEach(button => button.classList.remove('active'));
+                        target.classList.add('active');
+                        const tabId = target.getAttribute('data-tab');
+                        document.querySelectorAll('.tab-panel').forEach(panel => {
+                            panel.classList.toggle('active', panel.id === tabId);
+                        });
+                    });
+                });
+
+                document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+                // Listen for messages from parent
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'disableInternalSidebar') {
+                        disableSidebar();
+                    } else if (event.data.type === 'search') {
+                        state.searchTerm = event.data.term || '';
+                        updateHighlights();
+                    } else if (event.data.type === 'focusCluster') {
+                        toggleClusterFocus(event.data.clusterId);
+                    } else if (event.data.type === 'focusPredicate') {
+                        togglePredicateFocus(event.data.predicate);
+                    } else if (event.data.type === 'focusEntity') {
+                        toggleEntityFocus(event.data.id);
+                    }
+                });
+
+            }
+
+            renderStats();
+            renderTopLists();
+            renderClusters();
+            // renderRelationsTable();
+            // renderInsights();
+
+            // Delay network creation to ensure proper layout
+            setTimeout(() => {
+                createNetwork();
+                bindInteractions();
+            }, 100);
+        })();
+    </script>
+</body>
+
+</html>
